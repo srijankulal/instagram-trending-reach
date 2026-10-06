@@ -299,29 +299,34 @@ function renderSongs() {
 // Reach Leaderboard Table View
 function renderLeaderboard(songs) {
   return `
-    <div class="glass-card rounded-3xl border border-white/10 overflow-hidden shadow-2xl">
-      <div class="p-4 border-b border-white/10 flex items-center justify-between bg-white/5">
+    <div class="glass-card rounded-2xl sm:rounded-3xl border border-white/10 overflow-hidden shadow-2xl">
+      <div class="p-3 sm:p-4 border-b border-white/10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 bg-white/5">
         <div class="flex items-center gap-2">
-          <i data-lucide="trophy" class="w-5 h-5 text-amber-400"></i>
-          <h3 class="font-extrabold text-white text-base">Trending Audio Reach Leaderboard</h3>
+          <i data-lucide="trophy" class="w-4 sm:w-5 h-4 sm:h-5 text-amber-400"></i>
+          <h3 class="font-extrabold text-white text-sm sm:text-base">Trending Audio Reach Leaderboard</h3>
         </div>
-        <span class="text-xs text-pink-300 font-semibold bg-pink-500/20 px-3 py-1 rounded-full border border-pink-500/30">
-          Ranked by Total Instagram Views
-        </span>
+        <div class="flex items-center gap-2">
+          <span class="text-[10px] text-pink-300 font-semibold bg-pink-500/20 px-2.5 py-0.5 rounded-full border border-pink-500/30">
+            Ranked by Views
+          </span>
+          <span class="text-[10px] text-slate-400 sm:hidden flex items-center gap-1 font-medium">
+            <i data-lucide="move-horizontal" class="w-3 h-3 text-pink-400"></i> Swipe table
+          </span>
+        </div>
       </div>
 
       <div class="overflow-x-auto no-scrollbar">
-        <table class="w-full min-w-[700px] text-left text-xs">
+        <table class="w-full min-w-[620px] text-left text-xs">
           <thead class="bg-black/40 text-slate-400 uppercase tracking-wider text-[10px] border-b border-white/10">
             <tr>
-              <th class="py-3.5 px-4">Rank</th>
-              <th class="py-3.5 px-4">Song & Artist</th>
-              <th class="py-3.5 px-4">Total Reach Reached</th>
-              <th class="py-3.5 px-4">Reels Created</th>
-              <th class="py-3.5 px-4">Daily Reach Surge</th>
-              <th class="py-3.5 px-4">7-Day Trajectory</th>
-              <th class="py-3.5 px-4">Virality Saturation</th>
-              <th class="py-3.5 px-4 text-right">Actions</th>
+              <th class="py-3 px-3 sm:px-4">Rank</th>
+              <th class="py-3 px-3 sm:px-4">Song & Artist</th>
+              <th class="py-3 px-3 sm:px-4">Total Reach Reached</th>
+              <th class="py-3 px-3 sm:px-4">Reels Created</th>
+              <th class="py-3 px-3 sm:px-4">Daily Reach Surge</th>
+              <th class="py-3 px-3 sm:px-4">7-Day Trajectory</th>
+              <th class="py-3 px-3 sm:px-4">Virality Saturation</th>
+              <th class="py-3 px-3 sm:px-4 text-right">Actions</th>
             </tr>
           </thead>
           <tbody class="divide-y divide-white/5 text-slate-200">
@@ -333,20 +338,20 @@ function renderLeaderboard(songs) {
 
               return `
                 <tr class="hover:bg-white/5 transition ${isCurrent ? 'bg-pink-500/10' : ''}">
-                  <td class="py-3.5 px-4 font-mono font-black text-sm ${song.rank <= 3 ? 'text-pink-400' : 'text-slate-500'}">
+                  <td class="py-3 px-3 sm:px-4 font-mono font-black text-sm ${song.rank <= 3 ? 'text-pink-400' : 'text-slate-500'}">
                     #${song.rank}
                   </td>
-                  <td class="py-3.5 px-4">
-                    <div class="flex items-center gap-3">
-                      <div class="relative w-10 h-10 rounded-xl overflow-hidden flex-shrink-0 cursor-pointer group" onclick="handlePlayCard('${escapeHtml(song.title)}')">
+                  <td class="py-3 px-3 sm:px-4">
+                    <div class="flex items-center gap-2.5 sm:gap-3">
+                      <div class="relative w-9 h-9 sm:w-10 sm:h-10 rounded-xl overflow-hidden flex-shrink-0 cursor-pointer group" onclick="handlePlayCard('${escapeHtml(song.title)}')">
                         <img src="${song.artwork}" alt="${escapeHtml(song.title)}" class="w-full h-full object-cover">
                         <div class="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition">
                           <i data-lucide="${isPlayingThis ? 'pause' : 'play'}" class="w-3.5 h-3.5 text-white fill-current"></i>
                         </div>
                       </div>
-                      <div class="min-w-0 max-w-[180px]">
+                      <div class="min-w-0 max-w-[160px] sm:max-w-[200px]">
                         <div class="flex items-center gap-1.5">
-                          <p class="font-bold text-white truncate hover:text-pink-300 transition cursor-pointer" onclick="openReachModal('${escapeHtml(song.title)}')">
+                          <p class="font-bold text-white truncate hover:text-pink-300 transition cursor-pointer text-xs sm:text-sm" onclick="openReachModal('${escapeHtml(song.title)}')">
                             ${escapeHtml(song.title)}
                           </p>
                           ${song.category === 'Phonk & Bass' ? '<span class="text-[9px] font-black px-1.5 py-0.2 rounded bg-purple-500/30 text-fuchsia-300 border border-purple-500/40 flex-shrink-0">⚡ PHONK</span>' : ''}
@@ -355,25 +360,25 @@ function renderLeaderboard(songs) {
                       </div>
                     </div>
                   </td>
-                  <td class="py-3.5 px-4">
-                    <div class="flex items-center gap-1.5 font-extrabold text-sm text-white">
-                      <i data-lucide="eye" class="w-3.5 h-3.5 text-pink-400"></i>
+                  <td class="py-3 px-3 sm:px-4">
+                    <div class="flex items-center gap-1.5 font-extrabold text-xs sm:text-sm text-white">
+                      <i data-lucide="eye" class="w-3.5 h-3.5 text-pink-400 flex-shrink-0"></i>
                       ${escapeHtml(song.totalReach)}
                     </div>
                     <span class="text-[10px] text-slate-500">~${escapeHtml(song.avgViewsPerReel)} / reel</span>
                   </td>
-                  <td class="py-3.5 px-4">
-                    <span class="font-bold text-slate-200 font-mono">${escapeHtml(song.reelsCount)}</span>
+                  <td class="py-3 px-3 sm:px-4">
+                    <span class="font-bold text-slate-200 font-mono text-xs">${escapeHtml(song.reelsCount)}</span>
                     <span class="text-[10px] text-slate-500 block">Videos</span>
                   </td>
-                  <td class="py-3.5 px-4">
-                    <span class="font-bold text-emerald-400">${escapeHtml(song.dailyReachGrowth)}</span>
+                  <td class="py-3 px-3 sm:px-4">
+                    <span class="font-bold text-emerald-400 text-xs">${escapeHtml(song.dailyReachGrowth)}</span>
                     <span class="text-[10px] text-emerald-500/80 block">${escapeHtml(song.growthVelocity)} velocity</span>
                   </td>
-                  <td class="py-3.5 px-4">
+                  <td class="py-3 px-3 sm:px-4">
                     ${generateSparklineSvg(song.sparklineReach7d, song.velocityTrend === 'up')}
                   </td>
-                  <td class="py-3.5 px-4 min-w-[140px]">
+                  <td class="py-3 px-3 sm:px-4 min-w-[120px] sm:min-w-[140px]">
                     <div class="flex items-center justify-between text-[10px] text-slate-400 mb-1">
                       <span>${satScore}%</span>
                       <span class="text-pink-300 font-medium">${escapeHtml(song.saturation.split(' ')[0])}</span>
@@ -382,7 +387,7 @@ function renderLeaderboard(songs) {
                       <div class="h-full rounded-full ig-gradient" style="width: ${satScore}%;"></div>
                     </div>
                   </td>
-                  <td class="py-3.5 px-4 text-right">
+                  <td class="py-3 px-3 sm:px-4 text-right">
                     <div class="flex items-center justify-end gap-1.5">
                       <button onclick="openReachModal('${escapeHtml(song.title)}')" class="p-1.5 rounded-lg hover:bg-white/10 text-slate-300 hover:text-white" title="Deep Dive Analytics">
                         <i data-lucide="bar-chart-2" class="w-4 h-4 text-pink-400"></i>
@@ -410,25 +415,25 @@ function renderSongCard(song, idx) {
   const satScore = song.saturationScore || 80;
 
   return `
-    <div class="glass-card rounded-3xl p-5 border ${isCurrent ? 'border-pink-500/60 shadow-lg shadow-pink-500/10' : 'border-white/10'} relative flex flex-col justify-between group" data-song-title="${escapeHtml(song.title)}">
+    <div class="glass-card rounded-2xl sm:rounded-3xl p-4 sm:p-5 border ${isCurrent ? 'border-pink-500/60 shadow-lg shadow-pink-500/10' : 'border-white/10'} relative flex flex-col justify-between group" data-song-title="${escapeHtml(song.title)}">
       
       <!-- Top Badges & Actions -->
       <div class="flex items-center justify-between gap-2 mb-3">
-        <div class="flex items-center gap-1.5 flex-wrap">
-          <span class="text-xs font-black px-2.5 py-0.5 rounded-full ${song.rank <= 3 ? 'ig-gradient text-white shadow-sm' : 'bg-white/10 text-slate-300 font-mono'}">
+        <div class="flex items-center gap-1.5 flex-wrap min-w-0">
+          <span class="text-xs font-black px-2 sm:px-2.5 py-0.5 rounded-full flex-shrink-0 ${song.rank <= 3 ? 'ig-gradient text-white shadow-sm' : 'bg-white/10 text-slate-300 font-mono'}">
             #${song.rank}
           </span>
           ${song.category === 'Phonk & Bass' ? `
-          <span class="text-[10px] font-black px-2 py-0.5 rounded-full bg-gradient-to-r from-purple-600/40 to-pink-600/40 text-fuchsia-300 border border-purple-500/50 shadow-sm shadow-purple-500/30 flex items-center gap-1">
+          <span class="text-[10px] font-black px-2 py-0.5 rounded-full bg-gradient-to-r from-purple-600/40 to-pink-600/40 text-fuchsia-300 border border-purple-500/50 shadow-sm shadow-purple-500/30 flex items-center gap-1 flex-shrink-0">
             <span class="text-pink-400">⚡</span> PHONK
           </span>
           ` : ''}
-          <span class="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-pink-500/20 text-pink-300 border border-pink-500/30 truncate max-w-[130px]">
+          <span class="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-pink-500/20 text-pink-300 border border-pink-500/30 truncate max-w-[120px] sm:max-w-[140px]">
             ${escapeHtml(song.trendBadge)}
           </span>
         </div>
 
-        <div class="flex items-center gap-1">
+        <div class="flex items-center gap-1 flex-shrink-0">
           <button onclick="toggleSaveSong('${escapeHtml(song.title)}')" class="p-1.5 rounded-xl hover:bg-white/10 text-slate-400 hover:text-pink-400 transition" title="Save to favorites">
             <i data-lucide="bookmark" class="w-4 h-4 ${isSaved ? 'text-pink-500 fill-pink-500' : ''}"></i>
           </button>
@@ -439,8 +444,8 @@ function renderSongCard(song, idx) {
       </div>
 
       <!-- Artwork & Track Info -->
-      <div class="flex items-center gap-3.5 mb-3.5">
-        <div class="relative w-16 h-16 rounded-2xl overflow-hidden flex-shrink-0 bg-white/5 shadow-md group-hover:shadow-pink-500/20 transition cursor-pointer" onclick="handlePlayCard('${escapeHtml(song.title)}')">
+      <div class="flex items-center gap-3 sm:gap-3.5 mb-3 sm:mb-3.5">
+        <div class="relative w-14 h-14 sm:w-16 sm:h-16 rounded-xl sm:rounded-2xl overflow-hidden flex-shrink-0 bg-white/5 shadow-md group-hover:shadow-pink-500/20 transition cursor-pointer" onclick="handlePlayCard('${escapeHtml(song.title)}')">
           <img src="${song.artwork}" alt="${escapeHtml(song.title)}" class="w-full h-full object-cover group-hover:scale-105 transition duration-300">
           <div class="absolute inset-0 bg-black/40 flex items-center justify-center ${isPlayingThis ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'} transition">
             <div class="w-8 h-8 rounded-full ig-gradient flex items-center justify-center text-white shadow-md">
@@ -450,7 +455,7 @@ function renderSongCard(song, idx) {
         </div>
 
         <div class="min-w-0 flex-1">
-          <h3 class="font-bold text-base text-white truncate hover:text-pink-300 transition cursor-pointer" onclick="openReachModal('${escapeHtml(song.title)}')">
+          <h3 class="font-bold text-sm sm:text-base text-white truncate hover:text-pink-300 transition cursor-pointer" onclick="openReachModal('${escapeHtml(song.title)}')">
             ${escapeHtml(song.title)}
           </h3>
           <p class="text-xs text-slate-400 truncate font-medium">${escapeHtml(song.artist)}</p>
@@ -461,35 +466,35 @@ function renderSongCard(song, idx) {
       </div>
 
       <!-- PROMINENT REACH HERO BANNER ("how much reach it reached") -->
-      <div class="mb-3.5 p-3 rounded-2xl bg-gradient-to-r from-pink-500/15 via-purple-500/15 to-amber-500/15 border border-pink-500/30 flex items-center justify-between">
-        <div>
-          <p class="text-[10px] uppercase tracking-wider font-extrabold text-pink-300 flex items-center gap-1">
-            <i data-lucide="eye" class="w-3.5 h-3.5 text-pink-400"></i>
-            TOTAL REACH REACHED
+      <div class="mb-3 sm:mb-3.5 p-2.5 sm:p-3 rounded-xl sm:rounded-2xl bg-gradient-to-r from-pink-500/15 via-purple-500/15 to-amber-500/15 border border-pink-500/30 flex items-center justify-between gap-2">
+        <div class="min-w-0">
+          <p class="text-[9px] sm:text-[10px] uppercase tracking-wider font-extrabold text-pink-300 flex items-center gap-1">
+            <i data-lucide="eye" class="w-3.5 h-3.5 text-pink-400 flex-shrink-0"></i>
+            <span>TOTAL REACH REACHED</span>
           </p>
-          <p class="text-xl font-extrabold text-white tracking-tight">
+          <p class="text-lg sm:text-xl font-extrabold text-white tracking-tight truncate">
             ${escapeHtml(song.totalReach)}
           </p>
         </div>
-        <div class="text-right">
-          <span class="text-[10px] text-slate-400 font-medium block">Daily Gain</span>
-          <span class="text-xs font-black text-emerald-400">${escapeHtml(song.dailyReachGrowth)}</span>
+        <div class="text-right flex-shrink-0">
+          <span class="text-[9px] sm:text-[10px] text-slate-400 font-medium block">Daily Gain</span>
+          <span class="text-xs sm:text-sm font-black text-emerald-400">${escapeHtml(song.dailyReachGrowth)}</span>
         </div>
       </div>
 
       <!-- REACH METRICS BREAKDOWN -->
-      <div class="p-3.5 rounded-2xl bg-black/40 border border-white/5 mb-4 space-y-2.5">
+      <div class="p-3 sm:p-3.5 rounded-xl sm:rounded-2xl bg-black/40 border border-white/5 mb-3 sm:mb-4 space-y-2 sm:space-y-2.5">
         <div class="flex items-center justify-between text-xs">
           <div class="flex items-center gap-1.5 text-slate-400">
-            <i data-lucide="video" class="w-3.5 h-3.5 text-purple-400"></i>
-            <span>Reels Videos Created:</span>
+            <i data-lucide="video" class="w-3.5 h-3.5 text-purple-400 flex-shrink-0"></i>
+            <span>Reels Created:</span>
           </div>
           <span class="font-bold text-slate-200 font-mono">${escapeHtml(song.reelsCount)}</span>
         </div>
 
         <div class="flex items-center justify-between text-xs">
           <div class="flex items-center gap-1.5 text-slate-400">
-            <i data-lucide="trending-up" class="w-3.5 h-3.5 text-emerald-400"></i>
+            <i data-lucide="trending-up" class="w-3.5 h-3.5 text-emerald-400 flex-shrink-0"></i>
             <span>Growth Velocity:</span>
           </div>
           <span class="font-bold text-emerald-400">
@@ -498,10 +503,10 @@ function renderSongCard(song, idx) {
         </div>
 
         <!-- Saturation Progress Bar -->
-        <div class="pt-1.5 space-y-1">
+        <div class="pt-1 space-y-1">
           <div class="flex items-center justify-between text-[10px] text-slate-400">
             <span>Saturation: <strong class="text-white">${satScore}%</strong></span>
-            <span class="text-pink-300 font-semibold">${escapeHtml(song.saturation)}</span>
+            <span class="text-pink-300 font-semibold truncate ml-2">${escapeHtml(song.saturation)}</span>
           </div>
           <div class="w-full h-1.5 rounded-full bg-white/10 overflow-hidden">
             <div class="h-full rounded-full ig-gradient" style="width: ${satScore}%;"></div>
@@ -509,27 +514,27 @@ function renderSongCard(song, idx) {
         </div>
 
         <!-- 7-day sparkline trajectory curve -->
-        <div class="pt-2 border-t border-white/5 flex items-center justify-between">
-          <span class="text-[10px] text-slate-500 font-medium">7-Day Reach Curve</span>
+        <div class="pt-1.5 border-t border-white/5 flex items-center justify-between">
+          <span class="text-[10px] text-slate-500 font-medium">7-Day Curve</span>
           <div>${generateSparklineSvg(song.sparklineReach7d, song.velocityTrend === 'up')}</div>
         </div>
       </div>
 
       <!-- Creator Format Tip -->
-      <div class="text-[11px] text-slate-400 line-clamp-2 mb-4 italic pl-2 border-l-2 border-pink-500/40">
+      <div class="text-[10px] sm:text-[11px] text-slate-400 line-clamp-2 mb-3 sm:mb-4 italic pl-2 border-l-2 border-pink-500/40">
         "${escapeHtml(song.bestUsedFor)}"
       </div>
 
       <!-- Action Footer -->
       <div class="flex items-center gap-2 pt-2 border-t border-white/10">
-        <button onclick="openReachModal('${escapeHtml(song.title)}')" class="flex-1 py-2 px-3 rounded-xl bg-white/5 hover:bg-white/10 text-white text-xs font-semibold transition flex items-center justify-center gap-1.5 border border-white/10">
-          <i data-lucide="bar-chart-2" class="w-3.5 h-3.5 text-pink-400"></i>
-          Reach Deep Dive
+        <button onclick="openReachModal('${escapeHtml(song.title)}')" class="flex-1 py-2 px-2.5 sm:px-3 rounded-xl bg-white/5 hover:bg-white/10 text-white text-xs font-semibold transition flex items-center justify-center gap-1 sm:gap-1.5 border border-white/10">
+          <i data-lucide="bar-chart-2" class="w-3.5 h-3.5 text-pink-400 flex-shrink-0"></i>
+          <span>Reach Deep Dive</span>
         </button>
 
-        <a href="${song.instagramAudioUrl}" target="_blank" rel="noopener noreferrer" class="py-2 px-3 rounded-xl ig-gradient text-white text-xs font-bold transition flex items-center justify-center gap-1.5 shadow-md shadow-pink-500/20 hover:opacity-95" title="Open Reels Audio">
-          <i data-lucide="instagram" class="w-3.5 h-3.5"></i>
-          <span class="hidden sm:inline">Use Audio</span>
+        <a href="${song.instagramAudioUrl}" target="_blank" rel="noopener noreferrer" class="py-2 px-2.5 sm:px-3 rounded-xl ig-gradient text-white text-xs font-bold transition flex items-center justify-center gap-1 shadow-md shadow-pink-500/20 hover:opacity-95 flex-shrink-0" title="Open Reels Audio">
+          <i data-lucide="instagram" class="w-3.5 h-3.5 flex-shrink-0"></i>
+          <span>Use Audio</span>
         </a>
       </div>
 
@@ -545,34 +550,43 @@ function renderSongListItem(song, idx) {
   const isPlayingThis = isCurrent && state.isPlaying;
 
   return `
-    <div class="glass-card rounded-2xl p-3.5 border ${isCurrent ? 'border-pink-500/60' : 'border-white/10'} flex items-center justify-between gap-3 group" data-song-title="${escapeHtml(song.title)}">
+    <div class="glass-card rounded-2xl p-3 sm:p-3.5 border ${isCurrent ? 'border-pink-500/60' : 'border-white/10'} flex items-center justify-between gap-2.5 sm:gap-3 group" data-song-title="${escapeHtml(song.title)}">
       
       <!-- Rank & Art -->
-      <div class="flex items-center gap-3 min-w-0 flex-1">
-        <span class="text-xs font-black font-mono w-6 text-center ${song.rank <= 3 ? 'text-pink-400' : 'text-slate-500'}">
+      <div class="flex items-center gap-2.5 sm:gap-3 min-w-0 flex-1">
+        <span class="text-xs font-black font-mono w-5 sm:w-6 text-center flex-shrink-0 ${song.rank <= 3 ? 'text-pink-400' : 'text-slate-500'}">
           #${song.rank}
         </span>
 
-        <div class="relative w-12 h-12 rounded-xl overflow-hidden flex-shrink-0 bg-white/5 cursor-pointer" onclick="handlePlayCard('${escapeHtml(song.title)}')">
+        <div class="relative w-11 h-11 sm:w-12 sm:h-12 rounded-xl overflow-hidden flex-shrink-0 bg-white/5 cursor-pointer" onclick="handlePlayCard('${escapeHtml(song.title)}')">
           <img src="${song.artwork}" alt="${escapeHtml(song.title)}" class="w-full h-full object-cover">
           <div class="absolute inset-0 bg-black/40 flex items-center justify-center ${isPlayingThis ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'} transition">
             <i data-lucide="${isPlayingThis ? 'pause' : 'play'}" class="w-4 h-4 text-white fill-current"></i>
           </div>
         </div>
 
-        <div class="min-w-0">
+        <div class="min-w-0 flex-1">
           <div class="flex items-center gap-1.5">
-            <h4 class="font-bold text-sm text-white truncate hover:text-pink-300 transition cursor-pointer" onclick="openReachModal('${escapeHtml(song.title)}')">
+            <h4 class="font-bold text-xs sm:text-sm text-white truncate hover:text-pink-300 transition cursor-pointer" onclick="openReachModal('${escapeHtml(song.title)}')">
               ${escapeHtml(song.title)}
             </h4>
-            ${song.category === 'Phonk & Bass' ? '<span class="text-[9px] font-black px-1.5 py-0.5 rounded bg-purple-500/30 text-fuchsia-300 border border-purple-500/40 flex items-center gap-0.5">⚡ PHONK</span>' : ''}
+            ${song.category === 'Phonk & Bass' ? '<span class="text-[9px] font-black px-1.5 py-0.5 rounded bg-purple-500/30 text-fuchsia-300 border border-purple-500/40 flex items-center gap-0.5 flex-shrink-0">⚡ PHONK</span>' : ''}
           </div>
-          <p class="text-xs text-slate-400 truncate">${escapeHtml(song.artist)}</p>
+          <p class="text-[11px] sm:text-xs text-slate-400 truncate">${escapeHtml(song.artist)}</p>
+          <!-- Mobile Reach Highlight -->
+          <div class="flex items-center gap-2 mt-1 sm:hidden text-[10px]">
+            <span class="font-black text-white flex items-center gap-0.5">
+              <i data-lucide="eye" class="w-3 h-3 text-pink-400"></i>
+              ${escapeHtml(song.totalReach)}
+            </span>
+            <span class="text-slate-500">•</span>
+            <span class="text-emerald-400 font-semibold">${escapeHtml(song.growthVelocity)}</span>
+          </div>
         </div>
       </div>
 
-      <!-- Reach Metrics Table Columns -->
-      <div class="hidden sm:flex items-center gap-6 text-xs">
+      <!-- Reach Metrics Table Columns (Desktop / Tablet) -->
+      <div class="hidden sm:flex items-center gap-4 md:gap-6 text-xs flex-shrink-0">
         <div class="text-right">
           <p class="text-[10px] text-slate-500">Total Reach</p>
           <p class="font-bold text-white">${escapeHtml(song.totalReach)}</p>
@@ -587,20 +601,20 @@ function renderSongListItem(song, idx) {
         </div>
       </div>
 
-      <!-- Sparkline -->
-      <div class="hidden md:block">
+      <!-- Sparkline (Desktop) -->
+      <div class="hidden md:block flex-shrink-0">
         ${generateSparklineSvg(song.sparklineReach7d, song.velocityTrend === 'up')}
       </div>
 
       <!-- Actions -->
-      <div class="flex items-center gap-1.5">
-        <button onclick="openReachModal('${escapeHtml(song.title)}')" class="p-2 rounded-xl hover:bg-white/10 text-slate-300 hover:text-white transition" title="View Reach Analytics">
+      <div class="flex items-center gap-1 sm:gap-1.5 flex-shrink-0">
+        <button onclick="openReachModal('${escapeHtml(song.title)}')" class="p-1.5 sm:p-2 rounded-xl hover:bg-white/10 text-slate-300 hover:text-white transition" title="View Reach Analytics">
           <i data-lucide="bar-chart-2" class="w-4 h-4 text-pink-400"></i>
         </button>
-        <button onclick="toggleSaveSong('${escapeHtml(song.title)}')" class="p-2 rounded-xl hover:bg-white/10 text-slate-400 hover:text-pink-400 transition">
+        <button onclick="toggleSaveSong('${escapeHtml(song.title)}')" class="p-1.5 sm:p-2 rounded-xl hover:bg-white/10 text-slate-400 hover:text-pink-400 transition">
           <i data-lucide="bookmark" class="w-4 h-4 ${isSaved ? 'text-pink-500 fill-pink-500' : ''}"></i>
         </button>
-        <a href="${song.instagramAudioUrl}" target="_blank" rel="noopener noreferrer" class="p-2 rounded-xl ig-gradient text-white shadow-sm hover:opacity-95 transition" title="Open on Instagram">
+        <a href="${song.instagramAudioUrl}" target="_blank" rel="noopener noreferrer" class="p-1.5 sm:p-2 rounded-xl ig-gradient text-white shadow-sm hover:opacity-95 transition" title="Open on Instagram">
           <i data-lucide="instagram" class="w-4 h-4"></i>
         </a>
       </div>
@@ -708,84 +722,84 @@ function openReachModal(songTitle) {
 
   elements.modalBody.innerHTML = `
     <!-- Top Track Info -->
-    <div class="flex items-start gap-4">
-      <div class="relative w-20 h-20 rounded-2xl overflow-hidden flex-shrink-0 shadow-xl bg-white/5 cursor-pointer" onclick="handlePlayCard('${escapeHtml(song.title)}')">
+    <div class="flex items-start gap-3 sm:gap-4">
+      <div class="relative w-14 h-14 sm:w-20 sm:h-20 rounded-xl sm:rounded-2xl overflow-hidden flex-shrink-0 shadow-xl bg-white/5 cursor-pointer" onclick="handlePlayCard('${escapeHtml(song.title)}')">
         <img src="${song.artwork}" alt="${escapeHtml(song.title)}" class="w-full h-full object-cover">
         <div class="absolute inset-0 bg-black/40 flex items-center justify-center">
-          <div class="w-8 h-8 rounded-full ig-gradient flex items-center justify-center text-white">
-            <i data-lucide="${isPlayingThis ? 'pause' : 'play'}" class="w-4 h-4 fill-current ${isPlayingThis ? '' : 'ml-0.5'}"></i>
+          <div class="w-7 h-7 sm:w-8 sm:h-8 rounded-full ig-gradient flex items-center justify-center text-white">
+            <i data-lucide="${isPlayingThis ? 'pause' : 'play'}" class="w-3.5 h-3.5 sm:w-4 sm:h-4 fill-current ${isPlayingThis ? '' : 'ml-0.5'}"></i>
           </div>
         </div>
       </div>
 
       <div class="min-w-0 flex-1">
-        <div class="flex items-center gap-2 mb-1">
-          <span class="text-xs font-bold px-2 py-0.5 rounded-full ig-gradient text-white">#${song.rank} TRENDING</span>
-          <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-white/10 text-slate-300">${escapeHtml(song.category)}</span>
+        <div class="flex items-center gap-1.5 sm:gap-2 mb-1 flex-wrap">
+          <span class="text-xs font-bold px-2 py-0.5 rounded-full ig-gradient text-white flex-shrink-0">#${song.rank} TRENDING</span>
+          <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-white/10 text-slate-300 flex-shrink-0">${escapeHtml(song.category)}</span>
         </div>
-        <h2 class="text-xl sm:text-2xl font-extrabold text-white truncate">${escapeHtml(song.title)}</h2>
-        <p class="text-sm text-slate-400 font-medium">${escapeHtml(song.artist)}</p>
+        <h2 class="text-lg sm:text-2xl font-extrabold text-white truncate">${escapeHtml(song.title)}</h2>
+        <p class="text-xs sm:text-sm text-slate-400 font-medium truncate">${escapeHtml(song.artist)}</p>
       </div>
     </div>
 
     <!-- REACH METRICS HERO (Answering the user's explicit reach question) -->
-    <div class="p-4 rounded-3xl bg-gradient-to-br from-pink-500/10 via-purple-500/10 to-transparent border border-pink-500/30 space-y-4">
+    <div class="p-3 sm:p-4 rounded-2xl sm:rounded-3xl bg-gradient-to-br from-pink-500/10 via-purple-500/10 to-transparent border border-pink-500/30 space-y-3 sm:space-y-4">
       <div class="flex items-center justify-between border-b border-white/10 pb-2">
-        <span class="text-xs font-bold text-pink-300 uppercase tracking-wider flex items-center gap-1.5">
-          <i data-lucide="activity" class="w-4 h-4 text-pink-400"></i>
+        <span class="text-[11px] sm:text-xs font-bold text-pink-300 uppercase tracking-wider flex items-center gap-1.5">
+          <i data-lucide="activity" class="w-3.5 h-3.5 sm:w-4 sm:h-4 text-pink-400 flex-shrink-0"></i>
           Total Reach & Audience Intelligence
         </span>
-        <span class="text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+        <span class="text-[10px] sm:text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex-shrink-0">
           ${escapeHtml(song.saturation)}
         </span>
       </div>
 
-      <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center">
-        <div class="p-3 rounded-2xl bg-black/40 border border-white/5">
-          <p class="text-[10px] text-slate-400 font-medium">TOTAL VIEWS</p>
-          <p class="text-lg font-black text-white">${escapeHtml(song.totalReach)}</p>
-          <p class="text-[10px] text-slate-500">Across Instagram Reels</p>
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 text-center">
+        <div class="p-2 sm:p-3 rounded-xl sm:rounded-2xl bg-black/40 border border-white/5 min-w-0">
+          <p class="text-[9px] sm:text-[10px] text-slate-400 font-medium truncate">TOTAL VIEWS</p>
+          <p class="text-sm sm:text-lg font-black text-white truncate">${escapeHtml(song.totalReach)}</p>
+          <p class="text-[9px] sm:text-[10px] text-slate-500 truncate">Across Reels</p>
         </div>
-        <div class="p-3 rounded-2xl bg-black/40 border border-white/5">
-          <p class="text-[10px] text-slate-400 font-medium">REELS CREATED</p>
-          <p class="text-lg font-black text-pink-400">${escapeHtml(song.reelsCount)}</p>
-          <p class="text-[10px] text-slate-500">Videos using sound</p>
+        <div class="p-2 sm:p-3 rounded-xl sm:rounded-2xl bg-black/40 border border-white/5 min-w-0">
+          <p class="text-[9px] sm:text-[10px] text-slate-400 font-medium truncate">REELS CREATED</p>
+          <p class="text-sm sm:text-lg font-black text-pink-400 truncate">${escapeHtml(song.reelsCount)}</p>
+          <p class="text-[9px] sm:text-[10px] text-slate-500 truncate">Videos using sound</p>
         </div>
-        <div class="p-3 rounded-2xl bg-black/40 border border-white/5">
-          <p class="text-[10px] text-slate-400 font-medium">DAILY SURGE</p>
-          <p class="text-lg font-black text-emerald-400">${escapeHtml(song.dailyReachGrowth)}</p>
-          <p class="text-[10px] text-slate-500">Growth velocity ${escapeHtml(song.growthVelocity)}</p>
+        <div class="p-2 sm:p-3 rounded-xl sm:rounded-2xl bg-black/40 border border-white/5 min-w-0">
+          <p class="text-[9px] sm:text-[10px] text-slate-400 font-medium truncate">DAILY SURGE</p>
+          <p class="text-sm sm:text-lg font-black text-emerald-400 truncate">${escapeHtml(song.dailyReachGrowth)}</p>
+          <p class="text-[9px] sm:text-[10px] text-slate-500 truncate">Vel. ${escapeHtml(song.growthVelocity)}</p>
         </div>
-        <div class="p-3 rounded-2xl bg-black/40 border border-white/5">
-          <p class="text-[10px] text-slate-400 font-medium">AVG VIEWS / REEL</p>
-          <p class="text-lg font-black text-purple-300">${escapeHtml(song.avgViewsPerReel)}</p>
-          <p class="text-[10px] text-slate-500">High virality spread</p>
+        <div class="p-2 sm:p-3 rounded-xl sm:rounded-2xl bg-black/40 border border-white/5 min-w-0">
+          <p class="text-[9px] sm:text-[10px] text-slate-400 font-medium truncate">AVG / REEL</p>
+          <p class="text-sm sm:text-lg font-black text-purple-300 truncate">${escapeHtml(song.avgViewsPerReel)}</p>
+          <p class="text-[9px] sm:text-[10px] text-slate-500 truncate">Virality spread</p>
         </div>
       </div>
     </div>
 
     <!-- 7-Day Reach Growth Chart -->
-    <div class="p-4 rounded-2xl bg-white/5 border border-white/10 space-y-3">
+    <div class="p-3 sm:p-4 rounded-xl sm:rounded-2xl bg-white/5 border border-white/10 space-y-2 sm:space-y-3">
       <div class="flex items-center justify-between">
-        <h4 class="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-1.5">
-          <i data-lucide="trending-up" class="w-4 h-4 text-emerald-400"></i>
+        <h4 class="text-[11px] sm:text-xs font-bold text-white uppercase tracking-wider flex items-center gap-1.5">
+          <i data-lucide="trending-up" class="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-400 flex-shrink-0"></i>
           7-Day Reach Trajectory
         </h4>
-        <span class="text-[11px] text-emerald-400 font-semibold">${escapeHtml(song.growthVelocity)} 7-day surge</span>
+        <span class="text-[10px] sm:text-[11px] text-emerald-400 font-semibold flex-shrink-0">${escapeHtml(song.growthVelocity)} 7-day surge</span>
       </div>
       
-      <div class="h-32 flex items-end justify-between gap-2 pt-4 px-2">
+      <div class="h-28 sm:h-32 flex items-end justify-between gap-1.5 sm:gap-2 pt-3 sm:pt-4 px-1 sm:px-2">
         ${song.sparklineReach7d.map((val, i) => {
           const maxVal = Math.max(...song.sparklineReach7d);
           const heightPct = Math.max(15, Math.round((val / maxVal) * 100));
           return `
-            <div class="flex-1 flex flex-col items-center gap-1.5 group">
-              <div class="w-full rounded-t-lg bg-gradient-to-t from-purple-500 to-pink-500 group-hover:brightness-125 transition-all relative" style="height: ${heightPct}%;">
-                <div class="opacity-0 group-hover:opacity-100 absolute -top-7 left-1/2 -translate-x-1/2 px-1.5 py-0.5 rounded bg-black/90 text-[10px] font-mono text-white whitespace-nowrap border border-white/20 pointer-events-none transition">
+            <div class="flex-1 flex flex-col items-center gap-1 group">
+              <div class="w-full rounded-t-md sm:rounded-t-lg bg-gradient-to-t from-purple-500 to-pink-500 group-hover:brightness-125 transition-all relative" style="height: ${heightPct}%;">
+                <div class="opacity-0 group-hover:opacity-100 absolute -top-7 left-1/2 -translate-x-1/2 px-1.5 py-0.5 rounded bg-black/90 text-[10px] font-mono text-white whitespace-nowrap border border-white/20 pointer-events-none transition z-10">
                   ${val}M
                 </div>
               </div>
-              <span class="text-[10px] text-slate-400 font-mono">D-${7 - i}</span>
+              <span class="text-[9px] sm:text-[10px] text-slate-400 font-mono">D-${7 - i}</span>
             </div>
           `;
         }).join('')}
@@ -793,25 +807,25 @@ function openReachModal(songTitle) {
     </div>
 
     <!-- Audience Demographics & Engagement -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-      <div class="p-3.5 rounded-2xl bg-white/5 border border-white/10 space-y-2">
-        <span class="font-bold text-slate-300 flex items-center gap-1.5">
-          <i data-lucide="globe" class="w-3.5 h-3.5 text-blue-400"></i>
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3 text-xs">
+      <div class="p-3 sm:p-3.5 rounded-xl sm:rounded-2xl bg-white/5 border border-white/10 space-y-2">
+        <span class="font-bold text-slate-300 flex items-center gap-1.5 text-[11px] sm:text-xs">
+          <i data-lucide="globe" class="w-3.5 h-3.5 text-blue-400 flex-shrink-0"></i>
           Top Audiences by Country
         </span>
-        <div class="flex flex-wrap gap-1.5 pt-1">
+        <div class="flex flex-wrap gap-1 pt-0.5">
           ${song.topRegions.map(reg => `
-            <span class="px-2 py-0.5 rounded-lg bg-white/10 text-slate-200 text-[11px] font-medium">${escapeHtml(reg)}</span>
+            <span class="px-2 py-0.5 rounded-lg bg-white/10 text-slate-200 text-[10px] sm:text-[11px] font-medium">${escapeHtml(reg)}</span>
           `).join('')}
         </div>
       </div>
 
-      <div class="p-3.5 rounded-2xl bg-white/5 border border-white/10 space-y-2">
-        <span class="font-bold text-slate-300 flex items-center gap-1.5">
-          <i data-lucide="zap" class="w-3.5 h-3.5 text-amber-400"></i>
-          Algorithmic Engagement Metrics
+      <div class="p-3 sm:p-3.5 rounded-xl sm:rounded-2xl bg-white/5 border border-white/10 space-y-2">
+        <span class="font-bold text-slate-300 flex items-center gap-1.5 text-[11px] sm:text-xs">
+          <i data-lucide="zap" class="w-3.5 h-3.5 text-amber-400 flex-shrink-0"></i>
+          Algorithmic Engagement
         </span>
-        <div class="flex items-center justify-between text-[11px] pt-1">
+        <div class="flex items-center justify-between text-[11px] pt-0.5">
           <span class="text-slate-400">Engagement Rate:</span>
           <span class="font-bold text-emerald-400">${escapeHtml(song.engagementRate)}</span>
         </div>
@@ -823,24 +837,24 @@ function openReachModal(songTitle) {
     </div>
 
     <!-- Creator Recommendation Box -->
-    <div class="p-4 rounded-2xl bg-purple-950/30 border border-purple-500/30 space-y-2 text-xs">
-      <div class="flex items-center gap-2 text-purple-300 font-bold">
-        <i data-lucide="sparkles" class="w-4 h-4 text-purple-400"></i>
+    <div class="p-3 sm:p-4 rounded-xl sm:rounded-2xl bg-purple-950/30 border border-purple-500/30 space-y-1.5 sm:space-y-2 text-xs">
+      <div class="flex items-center gap-1.5 sm:gap-2 text-purple-300 font-bold text-[11px] sm:text-xs">
+        <i data-lucide="sparkles" class="w-3.5 h-3.5 sm:w-4 sm:h-4 text-purple-400 flex-shrink-0"></i>
         <span>Creator Strategy: How to Maximize Reach</span>
       </div>
-      <p class="text-slate-300 leading-relaxed"><strong class="text-white">Best Content Style:</strong> ${escapeHtml(song.bestUsedFor)}</p>
-      <p class="text-slate-300 leading-relaxed"><strong class="text-white">Algorithmic Tip:</strong> ${escapeHtml(song.creatorTip)}</p>
+      <p class="text-slate-300 leading-relaxed text-[11px] sm:text-xs"><strong class="text-white">Best Content Style:</strong> ${escapeHtml(song.bestUsedFor)}</p>
+      <p class="text-slate-300 leading-relaxed text-[11px] sm:text-xs"><strong class="text-white">Algorithmic Tip:</strong> ${escapeHtml(song.creatorTip)}</p>
     </div>
 
     <!-- Action Buttons -->
-    <div class="flex flex-col sm:flex-row items-stretch gap-2.5 pt-2">
-      <a href="${song.instagramAudioUrl}" target="_blank" rel="noopener noreferrer" class="flex-1 py-3 px-4 rounded-xl ig-gradient text-white font-bold text-xs flex items-center justify-center gap-2 shadow-lg shadow-pink-500/20 hover:opacity-95 transition">
-        <i data-lucide="instagram" class="w-4 h-4"></i>
-        Open Audio Directly on Instagram Reels
+    <div class="flex flex-col sm:flex-row items-stretch gap-2 sm:gap-2.5 pt-2">
+      <a href="${song.instagramAudioUrl}" target="_blank" rel="noopener noreferrer" class="flex-1 py-2.5 sm:py-3 px-3 sm:px-4 rounded-xl ig-gradient text-white font-bold text-xs flex items-center justify-center gap-2 shadow-lg shadow-pink-500/20 hover:opacity-95 transition">
+        <i data-lucide="instagram" class="w-4 h-4 flex-shrink-0"></i>
+        <span>Open on Instagram Reels</span>
       </a>
-      <button onclick="copyAudioLink('${escapeHtml(song.title)}', '${encodeURIComponent(song.instagramAudioUrl)}')" class="py-3 px-4 rounded-xl bg-white/10 hover:bg-white/15 text-white font-bold text-xs flex items-center justify-center gap-2 transition border border-white/10">
-        <i data-lucide="share-2" class="w-4 h-4 text-pink-400"></i>
-        Copy Audio URL
+      <button onclick="copyAudioLink('${escapeHtml(song.title)}', '${encodeURIComponent(song.instagramAudioUrl)}')" class="py-2.5 sm:py-3 px-3 sm:px-4 rounded-xl bg-white/10 hover:bg-white/15 text-white font-bold text-xs flex items-center justify-center gap-2 transition border border-white/10 flex-shrink-0">
+        <i data-lucide="share-2" class="w-4 h-4 text-pink-400 flex-shrink-0"></i>
+        <span>Copy Audio URL</span>
       </button>
     </div>
   `;
