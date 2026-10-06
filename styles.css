@@ -187,4 +187,26 @@ input[type="range"]::-webkit-slider-thumb:hover {
 .no-scrollbar {
   -ms-overflow-style: none;
   scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Touch responsiveness & mobile enhancements */
+button, a, input[type="range"] {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Safe area inset for modern smartphones (iPhone notch / home bar) */
+#bottom-player {
+  padding-bottom: max(12px, env(safe-area-inset-bottom));
+}
+
+body {
+  overflow-x: hidden;
+}
+
+@media (max-width: 640px) {
+  .glass-card {
+    border-radius: 1.25rem;
+  }
 }

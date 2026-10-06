@@ -227,6 +227,9 @@
         <button data-category="Sped-Up & Remixes" class="category-pill whitespace-nowrap px-3.5 py-1.5 rounded-full font-semibold transition bg-white/5 hover:bg-white/10 text-slate-300 border border-white/10">
           🚀 Sped-Up & Remixes
         </button>
+        <button data-category="Phonk & Bass" class="category-pill whitespace-nowrap px-3.5 py-1.5 rounded-full font-semibold transition bg-white/5 hover:bg-white/10 text-slate-300 border border-white/10">
+          ⚡ Phonk & Bass
+        </button>
         <button data-category="Latin & Reggaeton" class="category-pill whitespace-nowrap px-3.5 py-1.5 rounded-full font-semibold transition bg-white/5 hover:bg-white/10 text-slate-300 border border-white/10">
           🌴 Latin & Reggaeton
         </button>
@@ -418,16 +421,51 @@
   </div>
 
   <!-- Persistent Floating Bottom Audio Player -->
-  <div id="bottom-player" class="fixed bottom-0 inset-x-0 z-40 glass-panel border-t border-white/10 px-4 py-3 transform translate-y-full transition-transform duration-300">
-    <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
+  <div id="bottom-player" class="fixed bottom-0 inset-x-0 z-40 glass-panel border-t border-white/10 px-3 sm:px-6 py-2.5 sm:py-3 transform translate-y-full transition-transform duration-300 shadow-2xl">
+    
+    <!-- Mobile Top Progress Bar Line -->
+    <div class="absolute top-0 inset-x-0 h-1 bg-white/10 sm:hidden overflow-hidden">
+      <div id="player-mobile-progress" class="h-full ig-gradient w-0 transition-all duration-150"></div>
+    </div>
+
+    <!-- Mobile Compact Player View (Visible only on < sm screens) -->
+    <div class="flex sm:hidden items-center justify-between gap-2 w-full pt-0.5">
+      <!-- Art & Info -->
+      <div class="flex items-center gap-2.5 min-w-0 flex-1">
+        <div class="relative w-10 h-10 rounded-xl overflow-hidden flex-shrink-0 bg-white/5 border border-white/10 shadow-sm">
+          <img id="player-art-mobile" src="" alt="Track Art" class="w-full h-full object-cover">
+        </div>
+        <div class="min-w-0 flex-1">
+          <p id="player-title-mobile" class="text-xs font-bold text-white truncate">Track Title</p>
+          <p id="player-artist-mobile" class="text-[10px] text-slate-400 truncate">Artist Name</p>
+          <span id="player-reach-mobile" class="text-[9px] text-pink-300 font-semibold block truncate">Reach: 1.95B Views</span>
+        </div>
+      </div>
+
+      <!-- Controls -->
+      <div class="flex items-center gap-1.5 flex-shrink-0">
+        <button id="player-prev-mobile-btn" class="p-1.5 text-slate-400 hover:text-white transition">
+          <i data-lucide="skip-back" class="w-4 h-4"></i>
+        </button>
+        <button id="player-play-mobile-btn" class="w-9 h-9 rounded-full ig-gradient text-white flex items-center justify-center shadow-md shadow-pink-500/30 active:scale-95 transition">
+          <i data-lucide="play" class="w-4 h-4 fill-current ml-0.5" id="player-play-mobile-icon"></i>
+        </button>
+        <button id="player-next-mobile-btn" class="p-1.5 text-slate-400 hover:text-white transition">
+          <i data-lucide="skip-forward" class="w-4 h-4"></i>
+        </button>
+        <a id="player-ig-mobile-btn" href="#" target="_blank" rel="noopener noreferrer" class="p-2 rounded-xl ig-gradient text-white shadow-sm transition active:scale-95" title="Open on Instagram">
+          <i data-lucide="instagram" class="w-3.5 h-3.5"></i>
+        </a>
+      </div>
+    </div>
+
+    <!-- Desktop & Tablet Player View (Visible on sm and up) -->
+    <div class="hidden sm:flex max-w-7xl mx-auto items-center justify-between gap-3">
       
       <!-- Track Info (Left) -->
-      <div class="flex items-center gap-3 w-full sm:w-1/3 min-w-0">
+      <div class="flex items-center gap-3 w-1/3 min-w-0">
         <div class="relative w-12 h-12 rounded-xl overflow-hidden flex-shrink-0 bg-white/5 border border-white/10 group">
           <img id="player-art" src="" alt="Album Art" class="w-full h-full object-cover">
-          <div id="player-vinyl-spin" class="absolute inset-0 bg-black/40 rounded-full flex items-center justify-center opacity-0 transition">
-            <div class="w-2.5 h-2.5 rounded-full bg-white"></div>
-          </div>
         </div>
         <div class="min-w-0 flex-1">
           <p id="player-title" class="text-sm font-bold text-white truncate">Track Title</p>
@@ -439,7 +477,7 @@
           </div>
         </div>
         <!-- Equalizer animation -->
-        <div id="player-equalizer" class="hidden sm:flex items-end gap-0.5 h-5 px-2">
+        <div id="player-equalizer" class="hidden md:flex items-end gap-0.5 h-5 px-2">
           <div class="equalizer-bar"></div>
           <div class="equalizer-bar"></div>
           <div class="equalizer-bar"></div>
@@ -449,13 +487,13 @@
       </div>
 
       <!-- Playback Controls (Middle) -->
-      <div class="flex flex-col items-center gap-1.5 w-full sm:w-1/3">
+      <div class="flex flex-col items-center gap-1.5 w-1/3">
         <div class="flex items-center gap-4">
           <button id="player-prev-btn" class="text-slate-400 hover:text-white transition">
             <i data-lucide="skip-back" class="w-4 h-4"></i>
           </button>
           
-          <button id="player-play-btn" class="w-10 h-10 rounded-full ig-gradient text-white flex items-center justify-center shadow-md shadow-pink-500/30 hover:scale-105 transition">
+          <button id="player-play-btn" class="w-10 h-10 rounded-full ig-gradient text-white flex items-center justify-center shadow-md shadow-pink-500/30 hover:scale-105 active:scale-95 transition">
             <i data-lucide="play" class="w-4 h-4 fill-current ml-0.5" id="player-play-icon"></i>
           </button>
 
@@ -477,7 +515,7 @@
       </div>
 
       <!-- Volume & Quick Actions (Right) -->
-      <div class="hidden sm:flex items-center justify-end gap-3 w-1/3">
+      <div class="flex items-center justify-end gap-3 w-1/3">
         <div class="flex items-center gap-2">
           <button id="player-mute-btn" class="text-slate-400 hover:text-white">
             <i data-lucide="volume-2" class="w-4 h-4" id="player-volume-icon"></i>
@@ -495,15 +533,15 @@
   </div>
 
   <!-- Toast Container -->
-  <div id="toast" class="fixed top-6 right-6 z-50 transform translate-y-[-100px] opacity-0 transition-all duration-300 pointer-events-none">
+  <div id="toast" class="fixed top-4 right-4 sm:top-6 sm:right-6 z-50 transform translate-y-[-100px] opacity-0 transition-all duration-300 pointer-events-none">
     <div class="flex items-center gap-2 px-4 py-2.5 rounded-2xl glass-panel border border-pink-500/40 text-xs font-semibold text-white shadow-xl shadow-pink-500/20">
       <i data-lucide="check-circle" class="w-4 h-4 text-emerald-400" id="toast-icon"></i>
       <span id="toast-msg">Link copied to clipboard!</span>
     </div>
   </div>
 
-  <!-- Global Audio Element -->
-  <audio id="global-audio" preload="auto"></audio>
+  <!-- Global Audio Element with inline attributes -->
+  <audio id="global-audio" preload="auto" playsinline webkit-playsinline></audio>
 
   <!-- JavaScript App Logic -->
   <script src="app.js"></script>

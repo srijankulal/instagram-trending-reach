@@ -81,6 +81,18 @@ const elements = {
   playerIgBtn: document.getElementById('player-ig-btn'),
   playerEqualizer: document.getElementById('player-equalizer'),
 
+  // Mobile Player Elements
+  playerArtMobile: document.getElementById('player-art-mobile'),
+  playerTitleMobile: document.getElementById('player-title-mobile'),
+  playerArtistMobile: document.getElementById('player-artist-mobile'),
+  playerReachMobile: document.getElementById('player-reach-mobile'),
+  playerPlayMobileBtn: document.getElementById('player-play-mobile-btn'),
+  playerPlayMobileIcon: document.getElementById('player-play-mobile-icon'),
+  playerPrevMobileBtn: document.getElementById('player-prev-mobile-btn'),
+  playerNextMobileBtn: document.getElementById('player-next-mobile-btn'),
+  playerIgMobileBtn: document.getElementById('player-ig-mobile-btn'),
+  playerMobileProgress: document.getElementById('player-mobile-progress'),
+
   // Toast
   toast: document.getElementById('toast'),
   toastMsg: document.getElementById('toast-msg'),
@@ -535,20 +547,32 @@ function updatePlayerUI() {
   if (!state.currentTrack) return;
   const track = state.currentTrack;
 
-  elements.playerArt.src = track.artwork;
-  elements.playerTitle.textContent = track.title;
-  elements.playerArtist.textContent = track.artist;
-  elements.playerReachBadge.textContent = `Reach: ${track.totalReach} (${track.reelsCount} Reels)`;
-  elements.playerIgBtn.href = track.instagramAudioUrl;
+  // Desktop Elements
+  if (elements.playerArt) elements.playerArt.src = track.artwork;
+  if (elements.playerTitle) elements.playerTitle.textContent = track.title;
+  if (elements.playerArtist) elements.playerArtist.textContent = track.artist;
+  if (elements.playerReachBadge) elements.playerReachBadge.textContent = `Reach: ${track.totalReach} (${track.reelsCount} Reels)`;
+  if (elements.playerIgBtn) elements.playerIgBtn.href = track.instagramAudioUrl;
 
-  if (state.isPlaying) {
-    elements.playerPlayIcon.setAttribute('data-lucide', 'pause');
-    elements.playerEqualizer.classList.remove('hidden');
-    elements.playerEqualizer.classList.add('flex');
-  } else {
-    elements.playerPlayIcon.setAttribute('data-lucide', 'play');
-    elements.playerEqualizer.classList.add('hidden');
-    elements.playerEqualizer.classList.remove('flex');
+  // Mobile Elements
+  if (elements.playerArtMobile) elements.playerArtMobile.src = track.artwork;
+  if (elements.playerTitleMobile) elements.playerTitleMobile.textContent = track.title;
+  if (elements.playerArtistMobile) elements.playerArtistMobile.textContent = track.artist;
+  if (elements.playerReachMobile) elements.playerReachMobile.textContent = `Reach: ${track.totalReach}`;
+  if (elements.playerIgMobileBtn) elements.playerIgMobileBtn.href = track.instagramAudioUrl;
+
+  const playIcon = state.isPlaying ? 'pause' : 'play';
+  if (elements.playerPlayIcon) elements.playerPlayIcon.setAttribute('data-lucide', playIcon);
+  if (elements.playerPlayMobileIcon) elements.playerPlayMobileIcon.setAttribute('data-lucide', playIcon);
+
+  if (elements.playerEqualizer) {
+    if (state.isPlaying) {
+      elements.playerEqualizer.classList.remove('hidden');
+      elements.playerEqualizer.classList.add('flex');
+    } else {
+      elements.playerEqualizer.classList.add('hidden');
+      elements.playerEqualizer.classList.remove('flex');
+    }
   }
 
   lucide.createIcons();
@@ -995,15 +1019,19 @@ function setupEventListeners() {
   elements.globalAudio.addEventListener('timeupdate', () => {
     const cur = elements.globalAudio.currentTime;
     const dur = elements.globalAudio.duration || 30;
-    elements.playerCurrTime.textContent = formatTime(cur);
-    elements.playerDuration.textContent = formatTime(dur);
-    elements.playerProgress.value = (cur / dur) * 100;
+    if (elements.playerCurrTime) elements.playerCurrTime.textContent = formatTime(cur);
+    if (elements.playerDuration) elements.playerDuration.textContent = formatTime(dur);
+    const pct = (cur / dur) * 100;
+    if (elements.playerProgress) elements.playerProgress.value = pct;
+    if (elements.playerMobileProgress) elements.playerMobileProgress.style.width = `${pct}%`;
   });
 
-  elements.playerProgress.addEventListener('input', (e) => {
-    const dur = elements.globalAudio.duration || 30;
-    elements.globalAudio.currentTime = (e.target.value / 100) * dur;
-  });
+  if (elements.playerProgress) {
+    elements.playerProgress.addEventListener('input', (e) => {
+      const dur = elements.globalAudio.duration || 30;
+      elements.globalAudio.currentTime = (e.target.value / 100) * dur;
+    });
+  }
 
   elements.globalAudio.addEventListener('ended', () => {
     if (state.isLooping) {
@@ -1014,17 +1042,38 @@ function setupEventListeners() {
     }
   });
 
-  // Player Buttons
-  elements.playerPlayBtn.addEventListener('click', () => {
-    if (state.isPlaying) {
-      pauseAudio();
-    } else if (state.currentTrack) {
-      resumeAudio();
-    }
+  elements.globalAudio.addEventListener('error', (e) => {
+    console.warn('Audio playback notice:', e);
+    showToast('Direct stream protected. Opening track on Instagram Reels...', 'external-link');
   });
 
-  elements.playerNextBtn.addEventListener('click', playNextTrack);
-  elements.playerPrevBtn.addEventListener('click', playPrevTrack);
+  // Desktop Player Buttons
+  if (elements.playerPlayBtn) {
+    elements.playerPlayBtn.addEventListener('click', () => {
+      if (state.isPlaying) {
+        pauseAudio();
+      } else if (state.currentTrack) {
+        resumeAudio();
+      }
+    });
+  }
+
+  if (elements.playerNextBtn) elements.playerNextBtn.addEventListener('click', playNextTrack);
+  if (elements.playerPrevBtn) elements.playerPrevBtn.addEventListener('click', playPrevTrack);
+
+  // Mobile Player Buttons
+  if (elements.playerPlayMobileBtn) {
+    elements.playerPlayMobileBtn.addEventListener('click', () => {
+      if (state.isPlaying) {
+        pauseAudio();
+      } else if (state.currentTrack) {
+        resumeAudio();
+      }
+    });
+  }
+
+  if (elements.playerNextMobileBtn) elements.playerNextMobileBtn.addEventListener('click', playNextTrack);
+  if (elements.playerPrevMobileBtn) elements.playerPrevMobileBtn.addEventListener('click', playPrevTrack);
 
   elements.playerLoopBtn.addEventListener('click', () => {
     state.isLooping = !state.isLooping;
