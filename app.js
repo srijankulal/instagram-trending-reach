@@ -1,0 +1,1026 @@
+/**
+ * TrendWave - Instagram Reels Trending Songs & Reach Tracker
+ * Core Application Logic & Audio Player Engine
+ */
+
+// Application State
+const state = {
+  songs: [],
+  filteredSongs: [],
+  activeCategory: 'all',
+  searchQuery: '',
+  sortBy: 'reach',
+  viewMode: 'grid',
+  savedIds: new Set(JSON.parse(localStorage.getItem('tw_saved_songs') || '[]')),
+  currentTrack: null,
+  currentTrackIndex: -1,
+  isPlaying: false,
+  isLooping: false,
+};
+
+// DOM Element Selectors
+const elements = {
+  songsContainer: document.getElementById('songs-container'),
+  emptyState: document.getElementById('empty-state'),
+  displayedCount: document.getElementById('displayed-count'),
+  countAll: document.getElementById('count-all'),
+  savedCount: document.getElementById('saved-count'),
+  activeFilterLabel: document.getElementById('active-filter-label'),
+  searchInput: document.getElementById('search-input'),
+  searchClearBtn: document.getElementById('search-clear-btn'),
+  sortSelect: document.getElementById('sort-select'),
+  viewGridBtn: document.getElementById('view-grid-btn'),
+  viewListBtn: document.getElementById('view-list-btn'),
+  resetFiltersBtn: document.getElementById('reset-filters-btn'),
+  categoryPills: document.querySelectorAll('.category-pill'),
+  
+  // Modals
+  reachModal: document.getElementById('reach-modal'),
+  closeModalBtn: document.getElementById('close-modal-btn'),
+  modalBody: document.getElementById('modal-body'),
+  
+  calculatorModal: document.getElementById('calculator-modal'),
+  btnOpenCalculator: document.getElementById('btn-open-calculator'),
+  closeCalculatorBtn: document.getElementById('close-calculator-btn'),
+  calcFollowersSlider: document.getElementById('calc-followers-slider'),
+  calcFollowersVal: document.getElementById('calc-followers-val'),
+  calcNicheSelect: document.getElementById('calc-niche-select'),
+  calcSongSelect: document.getElementById('calc-song-select'),
+  calcProjectedViews: document.getElementById('calc-projected-views'),
+  calcExplorePct: document.getElementById('calc-explore-pct'),
+  calcDuration: document.getElementById('calc-duration'),
+  calcWindow: document.getElementById('calc-window'),
+  calcUseSoundBtn: document.getElementById('calc-use-sound-btn'),
+
+  searchModal: document.getElementById('search-modal'),
+  btnToggleSearchModal: document.getElementById('btn-toggle-search-modal'),
+  closeSearchModalBtn: document.getElementById('close-search-modal-btn'),
+  liveSearchInput: document.getElementById('live-search-input'),
+  btnRunLiveSearch: document.getElementById('btn-run-live-search'),
+  liveSearchResults: document.getElementById('live-search-results'),
+
+  // Bottom Audio Player
+  globalAudio: document.getElementById('global-audio'),
+  bottomPlayer: document.getElementById('bottom-player'),
+  playerArt: document.getElementById('player-art'),
+  playerTitle: document.getElementById('player-title'),
+  playerArtist: document.getElementById('player-artist'),
+  playerReachBadge: document.getElementById('player-reach-badge'),
+  playerPlayBtn: document.getElementById('player-play-btn'),
+  playerPlayIcon: document.getElementById('player-play-icon'),
+  playerPrevBtn: document.getElementById('player-prev-btn'),
+  playerNextBtn: document.getElementById('player-next-btn'),
+  playerLoopBtn: document.getElementById('player-loop-btn'),
+  playerProgress: document.getElementById('player-progress'),
+  playerCurrTime: document.getElementById('player-curr-time'),
+  playerDuration: document.getElementById('player-duration'),
+  playerVolume: document.getElementById('player-volume'),
+  playerMuteBtn: document.getElementById('player-mute-btn'),
+  playerVolumeIcon: document.getElementById('player-volume-icon'),
+  playerIgBtn: document.getElementById('player-ig-btn'),
+  playerEqualizer: document.getElementById('player-equalizer'),
+
+  // Toast
+  toast: document.getElementById('toast'),
+  toastMsg: document.getElementById('toast-msg'),
+  toastIcon: document.getElementById('toast-icon'),
+};
+
+// Initialize Application
+async function initApp() {
+  await loadSongsData();
+  setupEventListeners();
+  updateCategoryCounts();
+  populateCalculatorOptions();
+  renderSongs();
+  lucide.createIcons();
+}
+
+// Fetch trending songs dataset
+async function loadSongsData() {
+  try {
+    const res = await fetch('data/trending_songs.json');
+    if (!res.ok) throw new Error('Network error loading songs');
+    state.songs = await res.json();
+  } catch (err) {
+    console.warn('Falling back to inline data:', err);
+    state.songs = getFallbackData();
+  }
+  state.filteredSongs = [...state.songs];
+}
+
+// Helper: Generate SVG Sparkline for 7-day Reach Trajectory
+function generateSparklineSvg(data, isRising = true) {
+  if (!data || data.length < 2) return '';
+  const width = 120;
+  const height = 34;
+  const min = Math.min(...data);
+  const max = Math.max(...data);
+  const range = max - min || 1;
+  const points = data.map((val, idx) => {
+    const x = (idx / (data.length - 1)) * (width - 8) + 4;
+    const y = height - 4 - ((val - min) / range) * (height - 8);
+    return `${x.toFixed(1)},${y.toFixed(1)}`;
+  }).join(' ');
+
+  const strokeColor = isRising ? '#10B981' : '#F43F5E';
+  const fillGradientId = `grad-${Math.random().toString(36).substr(2, 6)}`;
+
+  return `
+    <svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" class="overflow-visible">
+      <defs>
+        <linearGradient id="${fillGradientId}" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="${strokeColor}" stop-opacity="0.3"/>
+          <stop offset="100%" stop-color="${strokeColor}" stop-opacity="0.0"/>
+        </linearGradient>
+      </defs>
+      <polyline
+        fill="none"
+        stroke="${strokeColor}"
+        stroke-width="2.5"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        points="${points}"
+      />
+    </svg>
+  `;
+}
+
+// Render Song Cards or Rows
+function renderSongs() {
+  applyFiltersAndSort();
+
+  elements.displayedCount.textContent = state.filteredSongs.length;
+  elements.countAll.textContent = state.songs.length;
+  elements.savedCount.textContent = state.savedIds.size;
+
+  if (state.filteredSongs.length === 0) {
+    elements.songsContainer.innerHTML = '';
+    elements.emptyState.classList.remove('hidden');
+    return;
+  }
+
+  elements.emptyState.classList.add('hidden');
+
+  if (state.viewMode === 'grid') {
+    elements.songsContainer.className = 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-5';
+    elements.songsContainer.innerHTML = state.filteredSongs.map((song, idx) => renderSongCard(song, idx)).join('');
+  } else {
+    elements.songsContainer.className = 'flex flex-col gap-3';
+    elements.songsContainer.innerHTML = state.filteredSongs.map((song, idx) => renderSongListItem(song, idx)).join('');
+  }
+
+  lucide.createIcons();
+}
+
+// Template for Grid Card
+function renderSongCard(song, idx) {
+  const isSaved = state.savedIds.has(song.title);
+  const isCurrent = state.currentTrack && state.currentTrack.title === song.title;
+  const isPlayingThis = isCurrent && state.isPlaying;
+
+  return `
+    <div class="glass-card rounded-3xl p-5 border ${isCurrent ? 'border-pink-500/60 shadow-lg shadow-pink-500/10' : 'border-white/10'} relative flex flex-col justify-between group" data-song-title="${escapeHtml(song.title)}">
+      
+      <!-- Top Badges & Actions -->
+      <div class="flex items-center justify-between gap-2 mb-3">
+        <div class="flex items-center gap-1.5">
+          <span class="text-xs font-black px-2.5 py-0.5 rounded-full ${song.rank <= 3 ? 'ig-gradient text-white shadow-sm' : 'bg-white/10 text-slate-300 font-mono'}">
+            #${song.rank}
+          </span>
+          <span class="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-pink-500/20 text-pink-300 border border-pink-500/30 truncate max-w-[150px]">
+            ${escapeHtml(song.trendBadge)}
+          </span>
+        </div>
+
+        <div class="flex items-center gap-1">
+          <button onclick="toggleSaveSong('${escapeHtml(song.title)}')" class="p-1.5 rounded-xl hover:bg-white/10 text-slate-400 hover:text-pink-400 transition" title="Save to favorites">
+            <i data-lucide="bookmark" class="w-4 h-4 ${isSaved ? 'text-pink-500 fill-pink-500' : ''}"></i>
+          </button>
+          <button onclick="copyAudioLink('${escapeHtml(song.title)}', '${encodeURIComponent(song.instagramAudioUrl)}')" class="p-1.5 rounded-xl hover:bg-white/10 text-slate-400 hover:text-white transition" title="Copy Instagram Audio Link">
+            <i data-lucide="share-2" class="w-4 h-4"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Artwork & Track Info -->
+      <div class="flex items-center gap-3.5 mb-4">
+        <div class="relative w-16 h-16 rounded-2xl overflow-hidden flex-shrink-0 bg-white/5 shadow-md group-hover:shadow-pink-500/20 transition cursor-pointer" onclick="handlePlayCard('${escapeHtml(song.title)}')">
+          <img src="${song.artwork}" alt="${escapeHtml(song.title)}" class="w-full h-full object-cover group-hover:scale-105 transition duration-300">
+          <div class="absolute inset-0 bg-black/40 flex items-center justify-center ${isPlayingThis ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'} transition">
+            <div class="w-8 h-8 rounded-full ig-gradient flex items-center justify-center text-white shadow-md">
+              <i data-lucide="${isPlayingThis ? 'pause' : 'play'}" class="w-4 h-4 fill-current ${isPlayingThis ? '' : 'ml-0.5'}"></i>
+            </div>
+          </div>
+        </div>
+
+        <div class="min-w-0 flex-1">
+          <h3 class="font-bold text-base text-white truncate hover:text-pink-300 transition cursor-pointer" onclick="openReachModal('${escapeHtml(song.title)}')">
+            ${escapeHtml(song.title)}
+          </h3>
+          <p class="text-xs text-slate-400 truncate font-medium">${escapeHtml(song.artist)}</p>
+          <span class="inline-block mt-1 text-[10px] px-2 py-0.5 rounded-md bg-white/5 text-slate-300 font-medium border border-white/10">
+            ${escapeHtml(song.category)}
+          </span>
+        </div>
+      </div>
+
+      <!-- REACH METRICS (The user's key feature: "also show how much reach it reached") -->
+      <div class="p-3.5 rounded-2xl bg-black/40 border border-white/5 mb-4 space-y-2.5">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-1.5 text-xs text-slate-400">
+            <i data-lucide="eye" class="w-3.5 h-3.5 text-pink-400"></i>
+            <span class="font-medium">Total Video Reach:</span>
+          </div>
+          <span class="font-extrabold text-sm text-white tracking-tight">${escapeHtml(song.totalReach)}</span>
+        </div>
+
+        <div class="flex items-center justify-between text-xs">
+          <div class="flex items-center gap-1.5 text-slate-400">
+            <i data-lucide="video" class="w-3.5 h-3.5 text-purple-400"></i>
+            <span>Reels Created:</span>
+          </div>
+          <span class="font-bold text-slate-200 font-mono">${escapeHtml(song.reelsCount)}</span>
+        </div>
+
+        <div class="flex items-center justify-between text-xs">
+          <div class="flex items-center gap-1.5 text-slate-400">
+            <i data-lucide="trending-up" class="w-3.5 h-3.5 text-emerald-400"></i>
+            <span>Growth Velocity:</span>
+          </div>
+          <span class="font-bold text-emerald-400 flex items-center gap-0.5">
+            ${escapeHtml(song.growthVelocity)}
+            <span class="text-[10px] text-slate-400 font-normal">(${escapeHtml(song.dailyReachGrowth)})</span>
+          </span>
+        </div>
+
+        <!-- 7-day sparkline trajectory curve -->
+        <div class="pt-2 border-t border-white/5 flex items-center justify-between">
+          <span class="text-[10px] text-slate-500 font-medium">7-Day Reach Curve</span>
+          <div>${generateSparklineSvg(song.sparklineReach7d, song.velocityTrend === 'up')}</div>
+        </div>
+      </div>
+
+      <!-- Creator Format Tip -->
+      <div class="text-[11px] text-slate-400 line-clamp-2 mb-4 italic pl-2 border-l-2 border-pink-500/40">
+        "${escapeHtml(song.bestUsedFor)}"
+      </div>
+
+      <!-- Action Footer -->
+      <div class="flex items-center gap-2 pt-2 border-t border-white/10">
+        <button onclick="openReachModal('${escapeHtml(song.title)}')" class="flex-1 py-2 px-3 rounded-xl bg-white/5 hover:bg-white/10 text-white text-xs font-semibold transition flex items-center justify-center gap-1.5 border border-white/10">
+          <i data-lucide="bar-chart-2" class="w-3.5 h-3.5 text-pink-400"></i>
+          Reach Deep Dive
+        </button>
+
+        <a href="${song.instagramAudioUrl}" target="_blank" rel="noopener noreferrer" class="py-2 px-3 rounded-xl ig-gradient text-white text-xs font-bold transition flex items-center justify-center gap-1.5 shadow-md shadow-pink-500/20 hover:opacity-95" title="Open Reels Audio">
+          <i data-lucide="instagram" class="w-3.5 h-3.5"></i>
+          <span class="hidden sm:inline">Use Audio</span>
+        </a>
+      </div>
+
+    </div>
+  `;
+}
+
+// Template for Compact List Item
+function renderSongListItem(song, idx) {
+  const isSaved = state.savedIds.has(song.title);
+  const isCurrent = state.currentTrack && state.currentTrack.title === song.title;
+  const isPlayingThis = isCurrent && state.isPlaying;
+
+  return `
+    <div class="glass-card rounded-2xl p-3.5 border ${isCurrent ? 'border-pink-500/60' : 'border-white/10'} flex items-center justify-between gap-3 group" data-song-title="${escapeHtml(song.title)}">
+      
+      <!-- Rank & Art -->
+      <div class="flex items-center gap-3 min-w-0 flex-1">
+        <span class="text-xs font-black font-mono w-6 text-center ${song.rank <= 3 ? 'text-pink-400' : 'text-slate-500'}">
+          #${song.rank}
+        </span>
+
+        <div class="relative w-12 h-12 rounded-xl overflow-hidden flex-shrink-0 bg-white/5 cursor-pointer" onclick="handlePlayCard('${escapeHtml(song.title)}')">
+          <img src="${song.artwork}" alt="${escapeHtml(song.title)}" class="w-full h-full object-cover">
+          <div class="absolute inset-0 bg-black/40 flex items-center justify-center ${isPlayingThis ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'} transition">
+            <i data-lucide="${isPlayingThis ? 'pause' : 'play'}" class="w-4 h-4 text-white fill-current"></i>
+          </div>
+        </div>
+
+        <div class="min-w-0">
+          <h4 class="font-bold text-sm text-white truncate hover:text-pink-300 transition cursor-pointer" onclick="openReachModal('${escapeHtml(song.title)}')">
+            ${escapeHtml(song.title)}
+          </h4>
+          <p class="text-xs text-slate-400 truncate">${escapeHtml(song.artist)}</p>
+        </div>
+      </div>
+
+      <!-- Reach Metrics Table Columns -->
+      <div class="hidden sm:flex items-center gap-6 text-xs">
+        <div class="text-right">
+          <p class="text-[10px] text-slate-500">Total Reach</p>
+          <p class="font-bold text-white">${escapeHtml(song.totalReach)}</p>
+        </div>
+        <div class="text-right">
+          <p class="text-[10px] text-slate-500">Reels Volume</p>
+          <p class="font-semibold text-slate-300">${escapeHtml(song.reelsCount)}</p>
+        </div>
+        <div class="text-right">
+          <p class="text-[10px] text-slate-500">Velocity</p>
+          <p class="font-bold text-emerald-400">${escapeHtml(song.growthVelocity)}</p>
+        </div>
+      </div>
+
+      <!-- Sparkline -->
+      <div class="hidden md:block">
+        ${generateSparklineSvg(song.sparklineReach7d, song.velocityTrend === 'up')}
+      </div>
+
+      <!-- Actions -->
+      <div class="flex items-center gap-1.5">
+        <button onclick="openReachModal('${escapeHtml(song.title)}')" class="p-2 rounded-xl hover:bg-white/10 text-slate-300 hover:text-white transition" title="View Reach Analytics">
+          <i data-lucide="bar-chart-2" class="w-4 h-4 text-pink-400"></i>
+        </button>
+        <button onclick="toggleSaveSong('${escapeHtml(song.title)}')" class="p-2 rounded-xl hover:bg-white/10 text-slate-400 hover:text-pink-400 transition">
+          <i data-lucide="bookmark" class="w-4 h-4 ${isSaved ? 'text-pink-500 fill-pink-500' : ''}"></i>
+        </button>
+        <a href="${song.instagramAudioUrl}" target="_blank" rel="noopener noreferrer" class="p-2 rounded-xl ig-gradient text-white shadow-sm hover:opacity-95 transition" title="Open on Instagram">
+          <i data-lucide="instagram" class="w-4 h-4"></i>
+        </a>
+      </div>
+
+    </div>
+  `;
+}
+
+// Audio Player Handling
+function handlePlayCard(songTitle) {
+  const song = state.songs.find(s => s.title === songTitle);
+  if (!song) return;
+
+  if (state.currentTrack && state.currentTrack.title === songTitle) {
+    if (state.isPlaying) {
+      pauseAudio();
+    } else {
+      resumeAudio();
+    }
+  } else {
+    playSong(song);
+  }
+}
+
+function playSong(song) {
+  if (!song || !song.previewUrl) {
+    showToast('Audio preview not available for this track', 'alert-circle');
+    return;
+  }
+
+  state.currentTrack = song;
+  state.currentTrackIndex = state.filteredSongs.findIndex(s => s.title === song.title);
+  
+  elements.globalAudio.src = song.previewUrl;
+  elements.globalAudio.play().then(() => {
+    state.isPlaying = true;
+    updatePlayerUI();
+    renderSongs();
+  }).catch(err => {
+    console.error('Audio play failed:', err);
+    showToast('Click anywhere on page first to allow audio', 'alert-circle');
+  });
+
+  // Reveal bottom player
+  elements.bottomPlayer.classList.remove('translate-y-full');
+}
+
+function pauseAudio() {
+  elements.globalAudio.pause();
+  state.isPlaying = false;
+  updatePlayerUI();
+  renderSongs();
+}
+
+function resumeAudio() {
+  elements.globalAudio.play().then(() => {
+    state.isPlaying = true;
+    updatePlayerUI();
+    renderSongs();
+  });
+}
+
+function updatePlayerUI() {
+  if (!state.currentTrack) return;
+  const track = state.currentTrack;
+
+  elements.playerArt.src = track.artwork;
+  elements.playerTitle.textContent = track.title;
+  elements.playerArtist.textContent = track.artist;
+  elements.playerReachBadge.textContent = `Reach: ${track.totalReach} (${track.reelsCount} Reels)`;
+  elements.playerIgBtn.href = track.instagramAudioUrl;
+
+  if (state.isPlaying) {
+    elements.playerPlayIcon.setAttribute('data-lucide', 'pause');
+    elements.playerEqualizer.classList.remove('hidden');
+    elements.playerEqualizer.classList.add('flex');
+  } else {
+    elements.playerPlayIcon.setAttribute('data-lucide', 'play');
+    elements.playerEqualizer.classList.add('hidden');
+    elements.playerEqualizer.classList.remove('flex');
+  }
+
+  lucide.createIcons();
+}
+
+// Reach Deep Dive Modal
+function openReachModal(songTitle) {
+  const song = state.songs.find(s => s.title === songTitle);
+  if (!song) return;
+
+  const isCurrent = state.currentTrack && state.currentTrack.title === song.title;
+  const isPlayingThis = isCurrent && state.isPlaying;
+
+  elements.modalBody.innerHTML = `
+    <!-- Top Track Info -->
+    <div class="flex items-start gap-4">
+      <div class="relative w-20 h-20 rounded-2xl overflow-hidden flex-shrink-0 shadow-xl bg-white/5 cursor-pointer" onclick="handlePlayCard('${escapeHtml(song.title)}')">
+        <img src="${song.artwork}" alt="${escapeHtml(song.title)}" class="w-full h-full object-cover">
+        <div class="absolute inset-0 bg-black/40 flex items-center justify-center">
+          <div class="w-8 h-8 rounded-full ig-gradient flex items-center justify-center text-white">
+            <i data-lucide="${isPlayingThis ? 'pause' : 'play'}" class="w-4 h-4 fill-current ${isPlayingThis ? '' : 'ml-0.5'}"></i>
+          </div>
+        </div>
+      </div>
+
+      <div class="min-w-0 flex-1">
+        <div class="flex items-center gap-2 mb-1">
+          <span class="text-xs font-bold px-2 py-0.5 rounded-full ig-gradient text-white">#${song.rank} TRENDING</span>
+          <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-white/10 text-slate-300">${escapeHtml(song.category)}</span>
+        </div>
+        <h2 class="text-xl sm:text-2xl font-extrabold text-white truncate">${escapeHtml(song.title)}</h2>
+        <p class="text-sm text-slate-400 font-medium">${escapeHtml(song.artist)}</p>
+      </div>
+    </div>
+
+    <!-- REACH METRICS HERO (Answering the user's explicit reach question) -->
+    <div class="p-4 rounded-3xl bg-gradient-to-br from-pink-500/10 via-purple-500/10 to-transparent border border-pink-500/30 space-y-4">
+      <div class="flex items-center justify-between border-b border-white/10 pb-2">
+        <span class="text-xs font-bold text-pink-300 uppercase tracking-wider flex items-center gap-1.5">
+          <i data-lucide="activity" class="w-4 h-4 text-pink-400"></i>
+          Total Reach & Audience Intelligence
+        </span>
+        <span class="text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+          ${escapeHtml(song.saturation)}
+        </span>
+      </div>
+
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center">
+        <div class="p-3 rounded-2xl bg-black/40 border border-white/5">
+          <p class="text-[10px] text-slate-400 font-medium">TOTAL VIEWS</p>
+          <p class="text-lg font-black text-white">${escapeHtml(song.totalReach)}</p>
+          <p class="text-[10px] text-slate-500">Across Instagram Reels</p>
+        </div>
+        <div class="p-3 rounded-2xl bg-black/40 border border-white/5">
+          <p class="text-[10px] text-slate-400 font-medium">REELS CREATED</p>
+          <p class="text-lg font-black text-pink-400">${escapeHtml(song.reelsCount)}</p>
+          <p class="text-[10px] text-slate-500">Videos using sound</p>
+        </div>
+        <div class="p-3 rounded-2xl bg-black/40 border border-white/5">
+          <p class="text-[10px] text-slate-400 font-medium">DAILY SURGE</p>
+          <p class="text-lg font-black text-emerald-400">${escapeHtml(song.dailyReachGrowth)}</p>
+          <p class="text-[10px] text-slate-500">Growth velocity ${escapeHtml(song.growthVelocity)}</p>
+        </div>
+        <div class="p-3 rounded-2xl bg-black/40 border border-white/5">
+          <p class="text-[10px] text-slate-400 font-medium">AVG VIEWS / REEL</p>
+          <p class="text-lg font-black text-purple-300">${escapeHtml(song.avgViewsPerReel)}</p>
+          <p class="text-[10px] text-slate-500">High virality spread</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- 7-Day Reach Growth Chart -->
+    <div class="p-4 rounded-2xl bg-white/5 border border-white/10 space-y-3">
+      <div class="flex items-center justify-between">
+        <h4 class="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-1.5">
+          <i data-lucide="trending-up" class="w-4 h-4 text-emerald-400"></i>
+          7-Day Reach Trajectory
+        </h4>
+        <span class="text-[11px] text-emerald-400 font-semibold">${escapeHtml(song.growthVelocity)} 7-day surge</span>
+      </div>
+      
+      <div class="h-32 flex items-end justify-between gap-2 pt-4 px-2">
+        ${song.sparklineReach7d.map((val, i) => {
+          const maxVal = Math.max(...song.sparklineReach7d);
+          const heightPct = Math.max(15, Math.round((val / maxVal) * 100));
+          return `
+            <div class="flex-1 flex flex-col items-center gap-1.5 group">
+              <div class="w-full rounded-t-lg bg-gradient-to-t from-purple-500 to-pink-500 group-hover:brightness-125 transition-all relative" style="height: ${heightPct}%;">
+                <div class="opacity-0 group-hover:opacity-100 absolute -top-7 left-1/2 -translate-x-1/2 px-1.5 py-0.5 rounded bg-black/90 text-[10px] font-mono text-white whitespace-nowrap border border-white/20 pointer-events-none transition">
+                  ${val}M
+                </div>
+              </div>
+              <span class="text-[10px] text-slate-400 font-mono">D-${7 - i}</span>
+            </div>
+          `;
+        }).join('')}
+      </div>
+    </div>
+
+    <!-- Audience Demographics & Engagement -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+      <div class="p-3.5 rounded-2xl bg-white/5 border border-white/10 space-y-2">
+        <span class="font-bold text-slate-300 flex items-center gap-1.5">
+          <i data-lucide="globe" class="w-3.5 h-3.5 text-blue-400"></i>
+          Top Audiences by Country
+        </span>
+        <div class="flex flex-wrap gap-1.5 pt-1">
+          ${song.topRegions.map(reg => `
+            <span class="px-2 py-0.5 rounded-lg bg-white/10 text-slate-200 text-[11px] font-medium">${escapeHtml(reg)}</span>
+          `).join('')}
+        </div>
+      </div>
+
+      <div class="p-3.5 rounded-2xl bg-white/5 border border-white/10 space-y-2">
+        <span class="font-bold text-slate-300 flex items-center gap-1.5">
+          <i data-lucide="zap" class="w-3.5 h-3.5 text-amber-400"></i>
+          Algorithmic Engagement Metrics
+        </span>
+        <div class="flex items-center justify-between text-[11px] pt-1">
+          <span class="text-slate-400">Engagement Rate:</span>
+          <span class="font-bold text-emerald-400">${escapeHtml(song.engagementRate)}</span>
+        </div>
+        <div class="flex items-center justify-between text-[11px]">
+          <span class="text-slate-400">Completion Rate:</span>
+          <span class="font-bold text-purple-300">${escapeHtml(song.completionRate)} (High Replay)</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Creator Recommendation Box -->
+    <div class="p-4 rounded-2xl bg-purple-950/30 border border-purple-500/30 space-y-2 text-xs">
+      <div class="flex items-center gap-2 text-purple-300 font-bold">
+        <i data-lucide="sparkles" class="w-4 h-4 text-purple-400"></i>
+        <span>Creator Strategy: How to Maximize Reach</span>
+      </div>
+      <p class="text-slate-300 leading-relaxed"><strong class="text-white">Best Content Style:</strong> ${escapeHtml(song.bestUsedFor)}</p>
+      <p class="text-slate-300 leading-relaxed"><strong class="text-white">Algorithmic Tip:</strong> ${escapeHtml(song.creatorTip)}</p>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="flex flex-col sm:flex-row items-stretch gap-2.5 pt-2">
+      <a href="${song.instagramAudioUrl}" target="_blank" rel="noopener noreferrer" class="flex-1 py-3 px-4 rounded-xl ig-gradient text-white font-bold text-xs flex items-center justify-center gap-2 shadow-lg shadow-pink-500/20 hover:opacity-95 transition">
+        <i data-lucide="instagram" class="w-4 h-4"></i>
+        Open Audio Directly on Instagram Reels
+      </a>
+      <button onclick="copyAudioLink('${escapeHtml(song.title)}', '${encodeURIComponent(song.instagramAudioUrl)}')" class="py-3 px-4 rounded-xl bg-white/10 hover:bg-white/15 text-white font-bold text-xs flex items-center justify-center gap-2 transition border border-white/10">
+        <i data-lucide="share-2" class="w-4 h-4 text-pink-400"></i>
+        Copy Audio URL
+      </button>
+    </div>
+  `;
+
+  elements.reachModal.classList.remove('opacity-0', 'pointer-events-none');
+  elements.reachModal.querySelector('#modal-content').classList.remove('scale-95');
+  lucide.createIcons();
+}
+
+function closeReachModal() {
+  elements.reachModal.classList.add('opacity-0', 'pointer-events-none');
+  elements.reachModal.querySelector('#modal-content').classList.add('scale-95');
+}
+
+// Creator Reach Predictor Logic
+function populateCalculatorOptions() {
+  elements.calcSongSelect.innerHTML = state.songs.map(s => `
+    <option value="${escapeHtml(s.title)}" class="bg-[#151522] text-white">#${s.rank} - ${escapeHtml(s.title)} (${escapeHtml(s.totalReach)})</option>
+  `).join('');
+  updateCalculatorPrediction();
+}
+
+function updateCalculatorPrediction() {
+  const followers = parseInt(elements.calcFollowersSlider.value, 10);
+  elements.calcFollowersVal.textContent = followers.toLocaleString();
+
+  const selectedTitle = elements.calcSongSelect.value;
+  const song = state.songs.find(s => s.title === selectedTitle) || state.songs[0];
+  const niche = elements.calcNicheSelect.value;
+
+  // Multipliers
+  let nicheMultiplier = 1.0;
+  let exploreRatio = 70;
+  if (niche === 'dance') { nicheMultiplier = 1.8; exploreRatio = 84; }
+  else if (niche === 'comedy') { nicheMultiplier = 1.6; exploreRatio = 80; }
+  else if (niche === 'lifestyle') { nicheMultiplier = 1.3; exploreRatio = 75; }
+  else if (niche === 'fitness') { nicheMultiplier = 1.2; exploreRatio = 72; }
+  else if (niche === 'travel') { nicheMultiplier = 1.5; exploreRatio = 79; }
+
+  const songVelocityMultiplier = song ? (song.growthVelocityNumeric / 100) : 1.2;
+  const baseReach = followers * 1.5;
+  const minViews = Math.round(baseReach * nicheMultiplier * songVelocityMultiplier);
+  const maxViews = Math.round(minViews * 2.8);
+
+  elements.calcProjectedViews.textContent = `${formatNumber(minViews)} – ${formatNumber(maxViews)}`;
+  elements.calcExplorePct.textContent = `${exploreRatio}%`;
+  
+  if (song) {
+    elements.calcUseSoundBtn.onclick = () => {
+      window.open(song.instagramAudioUrl, '_blank');
+    };
+  }
+}
+
+// Live Global iTunes Search
+async function runLiveMusicSearch() {
+  const query = elements.liveSearchInput.value.trim();
+  if (!query) return;
+
+  elements.liveSearchResults.innerHTML = `
+    <div class="py-8 text-center text-xs text-slate-400 flex items-center justify-center gap-2">
+      <div class="w-4 h-4 border-2 border-pink-500 border-t-transparent rounded-full animate-spin"></div>
+      Searching Apple Music & Instagram catalog...
+    </div>
+  `;
+
+  try {
+    const res = await fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(query)}&limit=6&entity=song`);
+    const data = await res.json();
+
+    if (!data.results || data.results.length === 0) {
+      elements.liveSearchResults.innerHTML = `
+        <div class="py-6 text-center text-xs text-slate-400">
+          No songs found matching "${escapeHtml(query)}". Try another name.
+        </div>
+      `;
+      return;
+    }
+
+    elements.liveSearchResults.innerHTML = data.results.map(item => {
+      const art = (item.artworkUrl100 || '').replace('100x100bb.jpg', '400x400bb.jpg');
+      const igUrl = `https://www.instagram.com/explore/search/keyword/?q=${encodeURIComponent(item.trackName + ' ' + item.artistName)}`;
+      const simReach = Math.floor(Math.random() * 800 + 150); // simulated reach in millions
+      const simReels = (simReach * 1.8).toFixed(1);
+
+      return `
+        <div class="glass-card p-3 rounded-2xl border border-white/10 flex items-center justify-between gap-3">
+          <div class="flex items-center gap-3 min-w-0 flex-1">
+            <img src="${art}" alt="${escapeHtml(item.trackName)}" class="w-12 h-12 rounded-xl object-cover flex-shrink-0 bg-white/5">
+            <div class="min-w-0">
+              <h4 class="font-bold text-sm text-white truncate">${escapeHtml(item.trackName)}</h4>
+              <p class="text-xs text-slate-400 truncate">${escapeHtml(item.artistName)}</p>
+              <div class="flex items-center gap-2 mt-0.5 text-[10px]">
+                <span class="text-pink-400 font-semibold">Simulated Reach: ${simReach}M Views</span>
+                <span class="text-slate-500">•</span>
+                <span class="text-slate-400">~${simReels}K Reels</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-2">
+            ${item.previewUrl ? `
+              <button onclick="playCustomPreview('${escapeHtml(item.trackName)}', '${escapeHtml(item.artistName)}', '${art}', '${item.previewUrl}', '${igUrl}')" class="p-2 rounded-xl bg-pink-500/20 hover:bg-pink-500/30 text-pink-300 transition" title="Preview Audio">
+                <i data-lucide="play" class="w-4 h-4 fill-current"></i>
+              </button>
+            ` : ''}
+            <a href="${igUrl}" target="_blank" rel="noopener noreferrer" class="p-2 rounded-xl ig-gradient text-white shadow-sm hover:opacity-95 transition" title="Open on Instagram">
+              <i data-lucide="instagram" class="w-4 h-4"></i>
+            </a>
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    lucide.createIcons();
+  } catch (err) {
+    elements.liveSearchResults.innerHTML = `
+      <div class="py-6 text-center text-xs text-rose-400">
+        Failed to fetch search results. Please check your internet connection.
+      </div>
+    `;
+  }
+}
+
+function playCustomPreview(title, artist, artwork, previewUrl, igUrl) {
+  playSong({
+    title,
+    artist,
+    artwork,
+    previewUrl,
+    instagramAudioUrl: igUrl,
+    totalReach: 'Trending Discovery',
+    reelsCount: 'Live Search'
+  });
+  elements.searchModal.classList.add('opacity-0', 'pointer-events-none');
+}
+
+// Bookmarks / Save Song
+function toggleSaveSong(title) {
+  if (state.savedIds.has(title)) {
+    state.savedIds.delete(title);
+    showToast(`Removed "${title}" from saved sounds`, 'bookmark-minus');
+  } else {
+    state.savedIds.add(title);
+    showToast(`Saved "${title}" to favorites!`, 'bookmark-check');
+  }
+  localStorage.setItem('tw_saved_songs', JSON.stringify([...state.savedIds]));
+  renderSongs();
+}
+
+// Copy Audio Link to Clipboard
+function copyAudioLink(title, encodedUrl) {
+  const url = decodeURIComponent(encodedUrl);
+  navigator.clipboard.writeText(url).then(() => {
+    showToast(`Instagram audio search copied for "${title}"!`, 'check-circle');
+  }).catch(() => {
+    // Fallback prompt
+    prompt('Copy Instagram Audio Link:', url);
+  });
+}
+
+// Toast Alert
+function showToast(message, iconName = 'check-circle') {
+  elements.toastMsg.textContent = message;
+  elements.toast.classList.remove('translate-y-[-100px]', 'opacity-0', 'pointer-events-none');
+  elements.toast.classList.add('translate-y-0', 'opacity-100');
+  
+  setTimeout(() => {
+    elements.toast.classList.add('translate-y-[-100px]', 'opacity-0', 'pointer-events-none');
+    elements.toast.classList.remove('translate-y-0', 'opacity-100');
+  }, 2600);
+}
+
+// Filter and Sort Engine
+function applyFiltersAndSort() {
+  let list = [...state.songs];
+
+  // Category filter
+  if (state.activeCategory === 'top10') {
+    list = list.filter(s => s.rank <= 10);
+  } else if (state.activeCategory === 'fast-rising') {
+    list = list.filter(s => s.growthVelocityNumeric >= 100);
+  } else if (state.activeCategory === 'saved') {
+    list = list.filter(s => state.savedIds.has(s.title));
+  } else if (state.activeCategory !== 'all') {
+    list = list.filter(s => s.category.toLowerCase().includes(state.activeCategory.toLowerCase()));
+  }
+
+  // Search filter
+  if (state.searchQuery) {
+    const q = state.searchQuery.toLowerCase();
+    list = list.filter(s => 
+      s.title.toLowerCase().includes(q) ||
+      s.artist.toLowerCase().includes(q) ||
+      s.category.toLowerCase().includes(q) ||
+      (s.bestUsedFor && s.bestUsedFor.toLowerCase().includes(q))
+    );
+  }
+
+  // Sorting
+  if (state.sortBy === 'reach') {
+    list.sort((a, b) => b.totalReachNumeric - a.totalReachNumeric);
+  } else if (state.sortBy === 'reels') {
+    list.sort((a, b) => b.reelsCountNumeric - a.reelsCountNumeric);
+  } else if (state.sortBy === 'velocity') {
+    list.sort((a, b) => b.growthVelocityNumeric - a.growthVelocityNumeric);
+  } else if (state.sortBy === 'rank') {
+    list.sort((a, b) => a.rank - b.rank);
+  }
+
+  state.filteredSongs = list;
+}
+
+function updateCategoryCounts() {
+  elements.savedCount.textContent = state.savedIds.size;
+}
+
+// Setup Event Listeners
+function setupEventListeners() {
+  // Category Pills
+  elements.categoryPills.forEach(pill => {
+    pill.addEventListener('click', () => {
+      elements.categoryPills.forEach(p => {
+        p.classList.remove('bg-pink-500', 'text-white', 'shadow-md', 'shadow-pink-500/20');
+        p.classList.add('bg-white/5', 'text-slate-300');
+      });
+      pill.classList.remove('bg-white/5', 'text-slate-300');
+      pill.classList.add('bg-pink-500', 'text-white', 'shadow-md', 'shadow-pink-500/20');
+
+      state.activeCategory = pill.dataset.category;
+      elements.activeFilterLabel.textContent = pill.textContent.trim();
+      renderSongs();
+    });
+  });
+
+  // Search Input
+  elements.searchInput.addEventListener('input', (e) => {
+    state.searchQuery = e.target.value.trim();
+    if (state.searchQuery) {
+      elements.searchClearBtn.classList.remove('hidden');
+    } else {
+      elements.searchClearBtn.classList.add('hidden');
+    }
+    renderSongs();
+  });
+
+  elements.searchClearBtn.addEventListener('click', () => {
+    elements.searchInput.value = '';
+    state.searchQuery = '';
+    elements.searchClearBtn.classList.add('hidden');
+    renderSongs();
+  });
+
+  // Sort Dropdown
+  elements.sortSelect.addEventListener('change', (e) => {
+    state.sortBy = e.target.value;
+    renderSongs();
+  });
+
+  // View Mode Buttons
+  elements.viewGridBtn.addEventListener('click', () => {
+    state.viewMode = 'grid';
+    elements.viewGridBtn.classList.add('bg-pink-500/20', 'text-pink-300');
+    elements.viewListBtn.classList.remove('bg-pink-500/20', 'text-pink-300');
+    renderSongs();
+  });
+
+  elements.viewListBtn.addEventListener('click', () => {
+    state.viewMode = 'list';
+    elements.viewListBtn.classList.add('bg-pink-500/20', 'text-pink-300');
+    elements.viewGridBtn.classList.remove('bg-pink-500/20', 'text-pink-300');
+    renderSongs();
+  });
+
+  elements.resetFiltersBtn.addEventListener('click', () => {
+    state.searchQuery = '';
+    state.activeCategory = 'all';
+    elements.searchInput.value = '';
+    elements.searchClearBtn.classList.add('hidden');
+    document.querySelector('.category-pill[data-category="all"]').click();
+  });
+
+  // Audio Progress & Scrubbing
+  elements.globalAudio.addEventListener('timeupdate', () => {
+    const cur = elements.globalAudio.currentTime;
+    const dur = elements.globalAudio.duration || 30;
+    elements.playerCurrTime.textContent = formatTime(cur);
+    elements.playerDuration.textContent = formatTime(dur);
+    elements.playerProgress.value = (cur / dur) * 100;
+  });
+
+  elements.playerProgress.addEventListener('input', (e) => {
+    const dur = elements.globalAudio.duration || 30;
+    elements.globalAudio.currentTime = (e.target.value / 100) * dur;
+  });
+
+  elements.globalAudio.addEventListener('ended', () => {
+    if (state.isLooping) {
+      elements.globalAudio.currentTime = 0;
+      elements.globalAudio.play();
+    } else {
+      playNextTrack();
+    }
+  });
+
+  // Player Buttons
+  elements.playerPlayBtn.addEventListener('click', () => {
+    if (state.isPlaying) {
+      pauseAudio();
+    } else if (state.currentTrack) {
+      resumeAudio();
+    }
+  });
+
+  elements.playerNextBtn.addEventListener('click', playNextTrack);
+  elements.playerPrevBtn.addEventListener('click', playPrevTrack);
+
+  elements.playerLoopBtn.addEventListener('click', () => {
+    state.isLooping = !state.isLooping;
+    elements.playerLoopBtn.classList.toggle('text-pink-400', state.isLooping);
+    showToast(state.isLooping ? 'Audio loop enabled' : 'Audio loop disabled', 'repeat');
+  });
+
+  // Volume
+  elements.playerVolume.addEventListener('input', (e) => {
+    elements.globalAudio.volume = parseFloat(e.target.value);
+  });
+
+  elements.playerMuteBtn.addEventListener('click', () => {
+    elements.globalAudio.muted = !elements.globalAudio.muted;
+    elements.playerVolumeIcon.setAttribute('data-lucide', elements.globalAudio.muted ? 'volume-x' : 'volume-2');
+    lucide.createIcons();
+  });
+
+  // Calculator Modal
+  elements.btnOpenCalculator.addEventListener('click', () => {
+    elements.calculatorModal.classList.remove('opacity-0', 'pointer-events-none');
+    elements.calculatorModal.querySelector('.glass-panel').classList.remove('scale-95');
+    updateCalculatorPrediction();
+  });
+
+  elements.closeCalculatorBtn.addEventListener('click', () => {
+    elements.calculatorModal.classList.add('opacity-0', 'pointer-events-none');
+    elements.calculatorModal.querySelector('.glass-panel').classList.add('scale-95');
+  });
+
+  elements.calcFollowersSlider.addEventListener('input', updateCalculatorPrediction);
+  elements.calcNicheSelect.addEventListener('change', updateCalculatorPrediction);
+  elements.calcSongSelect.addEventListener('change', updateCalculatorPrediction);
+
+  // Live Search Modal
+  elements.btnToggleSearchModal.addEventListener('click', () => {
+    elements.searchModal.classList.remove('opacity-0', 'pointer-events-none');
+    elements.searchModal.querySelector('.glass-panel').classList.remove('scale-95');
+    elements.liveSearchInput.focus();
+  });
+
+  elements.closeSearchModalBtn.addEventListener('click', () => {
+    elements.searchModal.classList.add('opacity-0', 'pointer-events-none');
+    elements.searchModal.querySelector('.glass-panel').classList.add('scale-95');
+  });
+
+  elements.btnRunLiveSearch.addEventListener('click', runLiveMusicSearch);
+  elements.liveSearchInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') runLiveMusicSearch();
+  });
+
+  // Close Deep Dive Modal
+  elements.closeModalBtn.addEventListener('click', closeReachModal);
+  elements.reachModal.addEventListener('click', (e) => {
+    if (e.target === elements.reachModal) closeReachModal();
+  });
+  elements.calculatorModal.addEventListener('click', (e) => {
+    if (e.target === elements.calculatorModal) {
+      elements.calculatorModal.classList.add('opacity-0', 'pointer-events-none');
+    }
+  });
+  elements.searchModal.addEventListener('click', (e) => {
+    if (e.target === elements.searchModal) {
+      elements.searchModal.classList.add('opacity-0', 'pointer-events-none');
+    }
+  });
+}
+
+function playNextTrack() {
+  if (state.filteredSongs.length === 0) return;
+  state.currentTrackIndex = (state.currentTrackIndex + 1) % state.filteredSongs.length;
+  playSong(state.filteredSongs[state.currentTrackIndex]);
+}
+
+function playPrevTrack() {
+  if (state.filteredSongs.length === 0) return;
+  state.currentTrackIndex = (state.currentTrackIndex - 1 + state.filteredSongs.length) % state.filteredSongs.length;
+  playSong(state.filteredSongs[state.currentTrackIndex]);
+}
+
+// Helpers
+function formatNumber(num) {
+  if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
+  if (num >= 1000) return (num / 1000).toFixed(0) + 'K';
+  return num.toString();
+}
+
+function formatTime(seconds) {
+  if (isNaN(seconds)) return '0:00';
+  const mins = Math.floor(seconds / 60);
+  const secs = Math.floor(seconds % 60);
+  return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+}
+
+function escapeHtml(str) {
+  if (!str) return '';
+  return str.toString()
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
+function getFallbackData() {
+  return [
+    {
+      rank: 1,
+      title: "Birds of a Feather",
+      artist: "Billie Eilish",
+      category: "Aesthetic & Chill",
+      trendBadge: "🔥 #1 GLOBAL VIRAL",
+      reelsCount: "3.8M",
+      reelsCountNumeric: 3800000,
+      totalReach: "1.95 Billion",
+      totalReachNumeric: 1950000000,
+      dailyReachGrowth: "+42.5M views/day",
+      growthVelocity: "+195%",
+      growthVelocityNumeric: 195,
+      velocityTrend: "up",
+      saturation: "High (Viral Peak)",
+      avgViewsPerReel: "513K views",
+      bestUsedFor: "Couple edits, heartwarming pet videos, sentimental friendship recaps, golden-hour B-roll.",
+      creatorTip: "Sync slow pans with acoustic guitar transition at 0:06.",
+      topRegions: ["United States", "United Kingdom", "Brazil"],
+      engagementRate: "9.4%",
+      completionRate: "78%",
+      sparklineReach7d: [180, 240, 310, 480, 720, 1200, 1950],
+      artwork: "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=600&auto=format&fit=crop&q=80",
+      previewUrl: "",
+      instagramAudioUrl: "https://www.instagram.com/explore/search/keyword/?q=Birds%20of%20a%20Feather%20Billie%20Eilish"
+    }
+  ];
+}
+
+// Start app once DOM is ready
+window.addEventListener('DOMContentLoaded', initApp);

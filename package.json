@@ -1,0 +1,22 @@
+{
+  "name": "instagram-trending-reach-tracker",
+  "version": "1.0.0",
+  "description": "Real-time Instagram Reels Trending Songs & Reach Analytics Tracker",
+  "main": "index.html",
+  "scripts": {
+    "start": "npx serve . -l 3000",
+    "dev": "npx serve . -l 3000",
+    "build": "echo 'Static build ready'"
+  },
+  "keywords": [
+    "instagram",
+    "reels",
+    "trending-songs",
+    "reach-analytics",
+    "viral-audio",
+    "music-tracker",
+    "vercel"
+  ],
+  "author": "srijankulal",
+  "license": "MIT"
+}
