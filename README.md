@@ -23,7 +23,9 @@
 
 ## 🚀 Live Demo
 
-- **Vercel Deployment**: [https://temporary-spry-laurel-xmp1glu.vercel.app](https://temporary-spry-laurel-xmp1glu.vercel.app) *(or updated production URL)*
+- **Live Web App on Vercel**: [https://temporary-express-fluorine-7ot3xqd.vercel.app](https://temporary-express-fluorine-7ot3xqd.vercel.app)
+- **Claim to your Vercel Dashboard**: [Claim Deployment Link](https://vercel.com/claim-deployment?code=f090b21d-d695-4763-a64c-059df964b218)
+- **GitHub Repository**: [https://github.com/srijankulal/instagram-trending-reach](https://github.com/srijankulal/instagram-trending-reach)
 
 ---
 
