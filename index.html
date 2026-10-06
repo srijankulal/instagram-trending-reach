@@ -93,18 +93,24 @@
       </div>
 
       <!-- Action Buttons (Right) -->
-      <div class="flex items-center gap-2 sm:gap-3">
-        <button id="btn-open-calculator" class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-purple-500/20 hover:bg-purple-500/30 text-purple-200 border border-purple-500/30 text-xs font-semibold transition">
+      <div class="flex items-center gap-2 sm:gap-2.5">
+        <!-- Auto Fetch Live Button -->
+        <button id="btn-sync-live" title="Auto-fetch and sync latest live tracks" class="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 border border-emerald-500/30 text-xs font-semibold transition active:scale-95">
+          <i data-lucide="refresh-cw" class="w-3.5 h-3.5 text-emerald-400" id="sync-icon"></i>
+          <span class="hidden sm:inline">Auto-Fetch</span> Live
+        </button>
+
+        <button id="btn-open-calculator" class="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl bg-purple-500/20 hover:bg-purple-500/30 text-purple-200 border border-purple-500/30 text-xs font-semibold transition">
           <i data-lucide="calculator" class="w-3.5 h-3.5 text-purple-300"></i>
-          <span class="hidden sm:inline">Reach</span> Predictor
+          <span class="hidden md:inline">Reach</span> Predictor
         </button>
 
-        <button id="btn-toggle-search-modal" class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-pink-500/20 hover:bg-pink-500/30 text-pink-200 border border-pink-500/30 text-xs font-semibold transition">
+        <button id="btn-toggle-search-modal" class="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl bg-pink-500/20 hover:bg-pink-500/30 text-pink-200 border border-pink-500/30 text-xs font-semibold transition">
           <i data-lucide="search" class="w-3.5 h-3.5 text-pink-300"></i>
-          <span class="hidden sm:inline">Search Any</span> Song
+          <span class="hidden md:inline">Search Any</span> Song
         </button>
 
-        <a href="https://vercel.com" target="_blank" rel="noopener noreferrer" class="hidden lg:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/15 text-white border border-white/15 text-xs font-semibold transition">
+        <a href="https://vercel.com" target="_blank" rel="noopener noreferrer" class="hidden xl:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/15 text-white border border-white/15 text-xs font-semibold transition">
           <svg class="w-3.5 h-3.5 fill-current" viewBox="0 0 1155 1000"><path d="m577.3 0 577.4 1000H0z"/></svg>
           Hosted on Vercel
         </a>

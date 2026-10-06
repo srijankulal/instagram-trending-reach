@@ -1,6 +1,7 @@
 {
   "name": "instagram-trending-reach-tracker",
   "version": "1.0.0",
+  "type": "module",
   "description": "Real-time Instagram Reels Trending Songs & Reach Analytics Tracker",
   "main": "index.html",
   "scripts": {
