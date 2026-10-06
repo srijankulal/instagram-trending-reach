@@ -31,6 +31,7 @@ const elements = {
   sortSelect: document.getElementById('sort-select'),
   viewGridBtn: document.getElementById('view-grid-btn'),
   viewListBtn: document.getElementById('view-list-btn'),
+  viewLeaderboardBtn: document.getElementById('view-leaderboard-btn'),
   resetFiltersBtn: document.getElementById('reset-filters-btn'),
   categoryPills: document.querySelectorAll('.category-pill'),
   
@@ -165,12 +166,116 @@ function renderSongs() {
   if (state.viewMode === 'grid') {
     elements.songsContainer.className = 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-5';
     elements.songsContainer.innerHTML = state.filteredSongs.map((song, idx) => renderSongCard(song, idx)).join('');
-  } else {
+  } else if (state.viewMode === 'list') {
     elements.songsContainer.className = 'flex flex-col gap-3';
     elements.songsContainer.innerHTML = state.filteredSongs.map((song, idx) => renderSongListItem(song, idx)).join('');
+  } else if (state.viewMode === 'leaderboard') {
+    elements.songsContainer.className = 'block w-full overflow-x-auto';
+    elements.songsContainer.innerHTML = renderLeaderboard(state.filteredSongs);
   }
 
   lucide.createIcons();
+}
+
+// Reach Leaderboard Table View
+function renderLeaderboard(songs) {
+  return `
+    <div class="glass-card rounded-3xl border border-white/10 overflow-hidden shadow-2xl">
+      <div class="p-4 border-b border-white/10 flex items-center justify-between bg-white/5">
+        <div class="flex items-center gap-2">
+          <i data-lucide="trophy" class="w-5 h-5 text-amber-400"></i>
+          <h3 class="font-extrabold text-white text-base">Trending Audio Reach Leaderboard</h3>
+        </div>
+        <span class="text-xs text-pink-300 font-semibold bg-pink-500/20 px-3 py-1 rounded-full border border-pink-500/30">
+          Ranked by Total Instagram Views
+        </span>
+      </div>
+
+      <table class="w-full text-left text-xs">
+        <thead class="bg-black/40 text-slate-400 uppercase tracking-wider text-[10px] border-b border-white/10">
+          <tr>
+            <th class="py-3.5 px-4">Rank</th>
+            <th class="py-3.5 px-4">Song & Artist</th>
+            <th class="py-3.5 px-4">Total Reach Reached</th>
+            <th class="py-3.5 px-4">Reels Created</th>
+            <th class="py-3.5 px-4">Daily Reach Surge</th>
+            <th class="py-3.5 px-4">7-Day Trajectory</th>
+            <th class="py-3.5 px-4">Virality Saturation</th>
+            <th class="py-3.5 px-4 text-right">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-white/5 text-slate-200">
+          ${songs.map((song, i) => {
+            const isSaved = state.savedIds.has(song.title);
+            const isCurrent = state.currentTrack && state.currentTrack.title === song.title;
+            const isPlayingThis = isCurrent && state.isPlaying;
+            const satScore = song.saturationScore || 80;
+
+            return `
+              <tr class="hover:bg-white/5 transition ${isCurrent ? 'bg-pink-500/10' : ''}">
+                <td class="py-3.5 px-4 font-mono font-black text-sm ${song.rank <= 3 ? 'text-pink-400' : 'text-slate-500'}">
+                  #${song.rank}
+                </td>
+                <td class="py-3.5 px-4">
+                  <div class="flex items-center gap-3">
+                    <div class="relative w-10 h-10 rounded-xl overflow-hidden flex-shrink-0 cursor-pointer group" onclick="handlePlayCard('${escapeHtml(song.title)}')">
+                      <img src="${song.artwork}" alt="${escapeHtml(song.title)}" class="w-full h-full object-cover">
+                      <div class="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition">
+                        <i data-lucide="${isPlayingThis ? 'pause' : 'play'}" class="w-3.5 h-3.5 text-white fill-current"></i>
+                      </div>
+                    </div>
+                    <div class="min-w-0 max-w-[180px]">
+                      <p class="font-bold text-white truncate hover:text-pink-300 transition cursor-pointer" onclick="openReachModal('${escapeHtml(song.title)}')">
+                        ${escapeHtml(song.title)}
+                      </p>
+                      <p class="text-[11px] text-slate-400 truncate">${escapeHtml(song.artist)}</p>
+                    </div>
+                  </div>
+                </td>
+                <td class="py-3.5 px-4">
+                  <div class="flex items-center gap-1.5 font-extrabold text-sm text-white">
+                    <i data-lucide="eye" class="w-3.5 h-3.5 text-pink-400"></i>
+                    ${escapeHtml(song.totalReach)}
+                  </div>
+                  <span class="text-[10px] text-slate-500">~${escapeHtml(song.avgViewsPerReel)} / reel</span>
+                </td>
+                <td class="py-3.5 px-4">
+                  <span class="font-bold text-slate-200 font-mono">${escapeHtml(song.reelsCount)}</span>
+                  <span class="text-[10px] text-slate-500 block">Videos</span>
+                </td>
+                <td class="py-3.5 px-4">
+                  <span class="font-bold text-emerald-400">${escapeHtml(song.dailyReachGrowth)}</span>
+                  <span class="text-[10px] text-emerald-500/80 block">${escapeHtml(song.growthVelocity)} velocity</span>
+                </td>
+                <td class="py-3.5 px-4">
+                  ${generateSparklineSvg(song.sparklineReach7d, song.velocityTrend === 'up')}
+                </td>
+                <td class="py-3.5 px-4 min-w-[140px]">
+                  <div class="flex items-center justify-between text-[10px] text-slate-400 mb-1">
+                    <span>${satScore}%</span>
+                    <span class="text-pink-300 font-medium">${escapeHtml(song.saturation.split(' ')[0])}</span>
+                  </div>
+                  <div class="w-full h-1.5 rounded-full bg-white/10 overflow-hidden">
+                    <div class="h-full rounded-full ig-gradient" style="width: ${satScore}%;"></div>
+                  </div>
+                </td>
+                <td class="py-3.5 px-4 text-right">
+                  <div class="flex items-center justify-end gap-1.5">
+                    <button onclick="openReachModal('${escapeHtml(song.title)}')" class="p-1.5 rounded-lg hover:bg-white/10 text-slate-300 hover:text-white" title="Deep Dive Analytics">
+                      <i data-lucide="bar-chart-2" class="w-4 h-4 text-pink-400"></i>
+                    </button>
+                    <a href="${song.instagramAudioUrl}" target="_blank" rel="noopener noreferrer" class="p-1.5 rounded-lg ig-gradient text-white hover:opacity-95" title="Open on Instagram">
+                      <i data-lucide="instagram" class="w-4 h-4"></i>
+                    </a>
+                  </div>
+                </td>
+              </tr>
+            `;
+          }).join('')}
+        </tbody>
+      </table>
+    </div>
+  `;
 }
 
 // Template for Grid Card
@@ -178,6 +283,7 @@ function renderSongCard(song, idx) {
   const isSaved = state.savedIds.has(song.title);
   const isCurrent = state.currentTrack && state.currentTrack.title === song.title;
   const isPlayingThis = isCurrent && state.isPlaying;
+  const satScore = song.saturationScore || 80;
 
   return `
     <div class="glass-card rounded-3xl p-5 border ${isCurrent ? 'border-pink-500/60 shadow-lg shadow-pink-500/10' : 'border-white/10'} relative flex flex-col justify-between group" data-song-title="${escapeHtml(song.title)}">
@@ -204,7 +310,7 @@ function renderSongCard(song, idx) {
       </div>
 
       <!-- Artwork & Track Info -->
-      <div class="flex items-center gap-3.5 mb-4">
+      <div class="flex items-center gap-3.5 mb-3.5">
         <div class="relative w-16 h-16 rounded-2xl overflow-hidden flex-shrink-0 bg-white/5 shadow-md group-hover:shadow-pink-500/20 transition cursor-pointer" onclick="handlePlayCard('${escapeHtml(song.title)}')">
           <img src="${song.artwork}" alt="${escapeHtml(song.title)}" class="w-full h-full object-cover group-hover:scale-105 transition duration-300">
           <div class="absolute inset-0 bg-black/40 flex items-center justify-center ${isPlayingThis ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'} transition">
@@ -225,20 +331,29 @@ function renderSongCard(song, idx) {
         </div>
       </div>
 
-      <!-- REACH METRICS (The user's key feature: "also show how much reach it reached") -->
-      <div class="p-3.5 rounded-2xl bg-black/40 border border-white/5 mb-4 space-y-2.5">
-        <div class="flex items-center justify-between">
-          <div class="flex items-center gap-1.5 text-xs text-slate-400">
+      <!-- PROMINENT REACH HERO BANNER ("how much reach it reached") -->
+      <div class="mb-3.5 p-3 rounded-2xl bg-gradient-to-r from-pink-500/15 via-purple-500/15 to-amber-500/15 border border-pink-500/30 flex items-center justify-between">
+        <div>
+          <p class="text-[10px] uppercase tracking-wider font-extrabold text-pink-300 flex items-center gap-1">
             <i data-lucide="eye" class="w-3.5 h-3.5 text-pink-400"></i>
-            <span class="font-medium">Total Video Reach:</span>
-          </div>
-          <span class="font-extrabold text-sm text-white tracking-tight">${escapeHtml(song.totalReach)}</span>
+            TOTAL REACH REACHED
+          </p>
+          <p class="text-xl font-extrabold text-white tracking-tight">
+            ${escapeHtml(song.totalReach)}
+          </p>
         </div>
+        <div class="text-right">
+          <span class="text-[10px] text-slate-400 font-medium block">Daily Gain</span>
+          <span class="text-xs font-black text-emerald-400">${escapeHtml(song.dailyReachGrowth)}</span>
+        </div>
+      </div>
 
+      <!-- REACH METRICS BREAKDOWN -->
+      <div class="p-3.5 rounded-2xl bg-black/40 border border-white/5 mb-4 space-y-2.5">
         <div class="flex items-center justify-between text-xs">
           <div class="flex items-center gap-1.5 text-slate-400">
             <i data-lucide="video" class="w-3.5 h-3.5 text-purple-400"></i>
-            <span>Reels Created:</span>
+            <span>Reels Videos Created:</span>
           </div>
           <span class="font-bold text-slate-200 font-mono">${escapeHtml(song.reelsCount)}</span>
         </div>
@@ -248,10 +363,20 @@ function renderSongCard(song, idx) {
             <i data-lucide="trending-up" class="w-3.5 h-3.5 text-emerald-400"></i>
             <span>Growth Velocity:</span>
           </div>
-          <span class="font-bold text-emerald-400 flex items-center gap-0.5">
+          <span class="font-bold text-emerald-400">
             ${escapeHtml(song.growthVelocity)}
-            <span class="text-[10px] text-slate-400 font-normal">(${escapeHtml(song.dailyReachGrowth)})</span>
           </span>
+        </div>
+
+        <!-- Saturation Progress Bar -->
+        <div class="pt-1.5 space-y-1">
+          <div class="flex items-center justify-between text-[10px] text-slate-400">
+            <span>Saturation: <strong class="text-white">${satScore}%</strong></span>
+            <span class="text-pink-300 font-semibold">${escapeHtml(song.saturation)}</span>
+          </div>
+          <div class="w-full h-1.5 rounded-full bg-white/10 overflow-hidden">
+            <div class="h-full rounded-full ig-gradient" style="width: ${satScore}%;"></div>
+          </div>
         </div>
 
         <!-- 7-day sparkline trajectory curve -->
@@ -282,6 +407,7 @@ function renderSongCard(song, idx) {
     </div>
   `;
 }
+
 
 // Template for Compact List Item
 function renderSongListItem(song, idx) {
@@ -835,6 +961,7 @@ function setupEventListeners() {
     state.viewMode = 'grid';
     elements.viewGridBtn.classList.add('bg-pink-500/20', 'text-pink-300');
     elements.viewListBtn.classList.remove('bg-pink-500/20', 'text-pink-300');
+    if (elements.viewLeaderboardBtn) elements.viewLeaderboardBtn.classList.remove('bg-pink-500/20', 'text-pink-300');
     renderSongs();
   });
 
@@ -842,8 +969,19 @@ function setupEventListeners() {
     state.viewMode = 'list';
     elements.viewListBtn.classList.add('bg-pink-500/20', 'text-pink-300');
     elements.viewGridBtn.classList.remove('bg-pink-500/20', 'text-pink-300');
+    if (elements.viewLeaderboardBtn) elements.viewLeaderboardBtn.classList.remove('bg-pink-500/20', 'text-pink-300');
     renderSongs();
   });
+
+  if (elements.viewLeaderboardBtn) {
+    elements.viewLeaderboardBtn.addEventListener('click', () => {
+      state.viewMode = 'leaderboard';
+      elements.viewLeaderboardBtn.classList.add('bg-pink-500/20', 'text-pink-300');
+      elements.viewGridBtn.classList.remove('bg-pink-500/20', 'text-pink-300');
+      elements.viewListBtn.classList.remove('bg-pink-500/20', 'text-pink-300');
+      renderSongs();
+    });
+  }
 
   elements.resetFiltersBtn.addEventListener('click', () => {
     state.searchQuery = '';
